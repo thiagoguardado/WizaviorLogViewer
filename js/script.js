@@ -1,19 +1,27 @@
 var unifiedJSON = { logEntries: [] };
+var jsons = [];
 var downloadWrapper = document.getElementById('download');
 var uploadWrapper = document.getElementById('upload');
 
 function uploadLogs(e) {
+  // stop button pulsing
   uploadWrapper.querySelector('a').classList.remove("pulse");
+
+  // make download button visible and pulsing
   uploadWrapper.classList.remove('s6');
   uploadWrapper.classList.add('s3');
-  downloadWrapper.querySelector('a').classList.add("pulse");
   downloadWrapper.classList.remove("hide");
+  downloadWrapper.querySelector('a').classList.add("pulse");
 
+  console.log(e);
   readJSONs(e);
 }
 
 function downloadLog() {
+  // stop button pulsing
   downloadWrapper.querySelector('a').classList.remove("pulse");
+
+  // download
   var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(unifiedJSON));
   var dlAnchorElem = document.getElementById('downloadAnchorElem');
   dlAnchorElem.setAttribute("href", dataStr);
@@ -22,18 +30,19 @@ function downloadLog() {
 }
 
 function readJSONs(evt) {
+  // clear jsons
+  concatenatedJson = null;
+
   var files = evt.target.files; // FileList object
-  var JSONs = [];
   var countReads = 0;
 
-  // Loop through the FileList and render image files as thumbnails.
+  // Loop through the FileList
   for (var i = 0; i < files.length; i++) {
     read(files[i]);
   }
 
   function read(file) {
-
-    // Only process image files.
+    // Only process json files.
     if (!file.type.match('application/json')) {
       return;
     }
@@ -43,15 +52,14 @@ function readJSONs(evt) {
     var reader = new FileReader();
 
     reader.onload = function () {
-      JSONs.push(reader.result);
-      if (JSONs.length >= countReads) {
-        concatenateJSONs(JSONs);
-
+      jsons.push(JSON.parse(reader.result));
+      if (jsons.length >= countReads) {
+        concatenateJSONs(jsons);
         displayData();
       }
     };
 
-    // Read in the image file as a data URL.
+    // Read
     reader.readAsText(file);
   }
 }
@@ -59,13 +67,102 @@ function readJSONs(evt) {
 function concatenateJSONs(JSONs) {
   unifiedJSON.logEntries.length = 0;
   for (let i = 0; i < JSONs.length; i++) {
-    unifiedJSON.logEntries = unifiedJSON.logEntries.concat(JSON.parse(JSONs[i]).logEntries)
+    unifiedJSON.logEntries = unifiedJSON.logEntries.concat(JSONs[i].logEntries)
   }
-
-  // document.getElementById("jsonViewer").innerHTML = JSON.stringify(unifiedJSON, undefined, '\t');
 }
 
 function displayData() {
+
+  displayQuedas();
+
+  function displayQuedas() {
+
+    var section = insertSection("Quedas");
+
+    for (let i = 0; i < jsons.length; i++) {
+      const logFile = jsons[i];
+
+      var canvas = insertChartInDom(section);
+      var ctx = canvas.getContext("2d");
+
+      console.log(logFile.logEntries);
+      var data = logFile.logEntries.map(log => log.stats.falls);
+      var labels = logFile.logEntries.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
+      var color = `'rgba("${Math.random().toFixed(1)},${Math.random().toFixed(1)},${Math.random().toFixed(1)},1)'`;
+      var clor_black = 'rgba(1,1,1,1)'
+      console.log(color);
+      var myLineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: logFile.fileName,
+              data: data,
+              fill:false,
+              borderColor:clor_black
+            }
+          ]
+        },
+        options: {
+          elements: {
+            line: {
+              tension: 0.1, // disables bezier curves
+              borderWidth: 3
+            }
+          }
+        }
+      });
+    }
+
+
+  }
+
+}
+
+
+// insere uma nova seção
+function insertSection(titleText) {
+  var parent = document.createElement("div");
+  var titleParent = document.createElement("div");
+  titleParent.classList.add("row");
+  var titleCenter = document.createElement("div");
+  titleCenter.classList.add("col", "s12", "center-align");
+  var title = document.createElement("h3");
+  title.innerHTML = titleText;
+
+  document.body.appendChild(parent);
+  parent.appendChild(titleParent);
+  titleParent.appendChild(titleCenter);
+  titleCenter.appendChild(title);
+  return parent;
+}
+
+
+// insere e retorn um canvas
+function insertChartInDom(section) {
+  var parent = document.createElement("div");
+  parent.classList.add("row");
+  var s1_1 = document.createElement("div");
+  s1_1.classList.add("col", "s1");
+  var s10 = document.createElement("div");
+  s10.classList.add("col", "s10");
+  var canvasParent = document.createElement("div");
+  canvasParent.classList.add("center-align", "canvasParent");
+  var canvas = document.createElement("canvas");
+  var s1_2 = document.createElement("div");
+  s1_2.classList.add("col", "s1");
+
+  section.appendChild(parent);
+  parent.appendChild(s1_1);
+  parent.appendChild(s10);
+  s10.appendChild(canvasParent);
+  canvasParent.appendChild(canvas);
+  parent.appendChild(s1_2);
+  return canvas;
+}
+
+function old_displayData() {
   var results = getResults();
   plotResults(results);
 
@@ -209,5 +306,39 @@ function displayData() {
     });
   }
 }
+
+
+function readJSONLocal() {
+  var files = ["../log_Stefan.json", "../log_Connor.json"];
+  var count = 0;
+  for (let i = 0; i < files.length; i++) {
+    const fileName = files[i]
+    const element = files[i];
+    var xhr = new XMLHttpRequest();
+    count++;
+    xhr.open('GET', element, true);
+    xhr.responseType = 'blob';
+    xhr.onload = function (e) {
+      if (this.status == 200) {
+        var file = new File([this.response], 'temp');
+        var fileReader = new FileReader();
+        fileReader.addEventListener('load', function () {
+          var json = JSON.parse(fileReader.result);
+          json.fileName = fileName;
+          jsons.push(json);
+          if (jsons.length >= count) {
+            console.log(jsons);
+            concatenateJSONs(jsons);
+            displayData();
+          }
+        });
+        fileReader.readAsText(file);
+      }
+    }
+    xhr.send();
+  }
+}
+
+// readJSONLocal();
 
 
