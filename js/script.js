@@ -2,6 +2,7 @@ var unifiedJSON = { logEntries: [] };
 var jsons = [];
 var downloadWrapper = document.getElementById('download');
 var uploadWrapper = document.getElementById('upload');
+var navMenu = document.querySelector('.nav-wrapper ul');
 
 var chartsColors = [
   "rgba(148,0,211,1)",
@@ -74,11 +75,12 @@ function setupNewImport() {
     sections[i].parentNode.removeChild(sections[i]);
   }
 
-  /*   // change colors
-    chartsColors.length = 0;
-    for (let i = 0; i < 10; i++) {
-      chartsColors.push(`rgba(${(Math.random() * 255).toFixed(0)},${(Math.random() * 255).toFixed(0)},${(Math.random() * 255).toFixed(0)},255)`);
-    } */
+  // clear navbar
+  while (navMenu.firstChild) {
+    navMenu.removeChild(navMenu.firstChild);
+  }
+
+  // shuffle colors
   chartsColors.sort(() => 0.5 - Math.random());
 
   // clear jsons
@@ -115,7 +117,7 @@ function displayData() {
   }
 
   function displayQuedasVulcao() {
-    var section = insertSection("Quedas Vulcao");
+    var section = insertSection("Quedas Vulc√£o");
     var canvases = insertCharts(section, 1, false);
 
     const canvas = canvases[0];
@@ -179,27 +181,44 @@ function plotLinear(ctx, datasets, labels) {
             maxRotation: 90
           }
         }]
+      },
+      legend: {
+        position:'bottom',
+        labels:{
+          usePointStyle:true
+        }
       }
     }
   });
 }
 
 
-// insere uma nova seÁ„o
-function insertSection(titleText) {
-  var parent = document.createElement("div");
+// insere uma nova se√ß√£o
+function insertSection(sectionTitle) {
+  // create section
+  let parent = document.createElement("div");
   parent.classList.add("chartSection");
-  var titleParent = document.createElement("div");
+  parent.setAttribute("id", sectionTitle);
+  let titleParent = document.createElement("div");
   titleParent.classList.add("row");
-  var titleCenter = document.createElement("div");
+  let titleCenter = document.createElement("div");
   titleCenter.classList.add("col", "s12", "center-align");
-  var title = document.createElement("h3");
-  title.innerHTML = titleText;
-
+  let title = document.createElement("h1");
+  title.classList.add("sectionTitle")
+  title.innerHTML = sectionTitle;
   document.body.appendChild(parent);
   parent.appendChild(titleParent);
   titleParent.appendChild(titleCenter);
   titleCenter.appendChild(title);
+
+  // add section to menu
+  let navItem = document.createElement("li");
+  let navItem_a = document.createElement("a");
+  navItem_a.setAttribute("href", `#${sectionTitle}`)
+  navItem_a.innerHTML = sectionTitle;
+  navItem.appendChild(navItem_a);
+  navMenu.appendChild(navItem);
+
   return parent;
 }
 
@@ -223,9 +242,20 @@ function insertCharts(section, numberOfCanvas, twoAtLine) {
     canvasParentRow.classList.add("col", "s10");
     parent.appendChild(canvasParentRow);
 
+    let chartElement;
     if (twoAtLine) {
+
       for (let j = 0; j < 2; j++) {
-        let chartElement = document.createElement("div");
+        if (i >= numberOfCanvas) {
+          let left = document.createElement("div");
+          left.classList.add("col", "xl3");
+          chartElement.parentNode.insertBefore(left, chartElement);
+          let right = document.createElement("div");
+          right.classList.add("col", "xl3");
+          chartElement.parentNode.appendChild(right);
+          break;
+        }
+        chartElement = document.createElement("div");
         chartElement.classList.add("col", "s12", "xl6");
         canvasParentRow.appendChild(chartElement);
 
@@ -233,11 +263,9 @@ function insertCharts(section, numberOfCanvas, twoAtLine) {
         canvasParent.classList.add("center-align", "canvasParent");
         chartElement.appendChild(canvasParent);
 
-        if (i < numberOfCanvas) {
-          let canvas = document.createElement("canvas");
-          canvasParent.appendChild(canvas);
-          canvasResult.push(canvas);
-        }
+        let canvas = document.createElement("canvas");
+        canvasParent.appendChild(canvas);
+        canvasResult.push(canvas);
         i++;
       }
     } else {

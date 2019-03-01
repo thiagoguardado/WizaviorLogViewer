@@ -1,3 +1,7 @@
+html {
+  scroll-behavior: smooth;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 #file_input{
   font-size: 100px;
   position: absolute;
@@ -8,5 +12,15 @@
   height: 100%;
 }
 .canvasParent{
-  max-width:800px; margin: 0 auto;
+  max-width:1000px; margin: 0 auto;
+}
+.chartSection{
+  border-top: 1px solid gray;
+  padding: 5px 0;
+}
+.sectionTitle{
+  color:#464545;
+  font-weight: bold;
+  text-shadow: 3px 2px 9px rgba(150, 150, 150, 1);
+  margin-bottom: 30px;
 }
