@@ -3,7 +3,15 @@ var jsons = [];
 var downloadWrapper = document.getElementById('download');
 var uploadWrapper = document.getElementById('upload');
 
-var chartsColors = [];
+var chartsColors = [
+  "rgba(148,0,211,1)",
+  "rgba(75,0,130,1)",
+  "rgba(0,0,255,1)",
+  "rgba(0,255,0,1)",
+  "rgba(255,255,0,1)",
+  "rgba(255,127,0,1)",
+  "rgba(255,0,0,1)",
+];
 
 function uploadLogs(e) {
   // stop button pulsing
@@ -25,7 +33,7 @@ function downloadLog() {
 }
 
 function readJSONs(evt) {
-  
+
   setupNewImport();
 
   let files = evt.target.files; // FileList object
@@ -59,18 +67,19 @@ function readJSONs(evt) {
   }
 }
 
-function setupNewImport(){
+function setupNewImport() {
   // clear previous data
   let sections = document.querySelectorAll(".chartSection");
   for (let i = 0; i < sections.length; i++) {
     sections[i].parentNode.removeChild(sections[i]);
   }
 
-  // change colors
-  chartsColors.length = 0;
-  for (let i = 0; i < 10; i++) {
-    chartsColors.push(`rgba(${(Math.random() * 255).toFixed(0)},${(Math.random() * 255).toFixed(0)},${(Math.random() * 255).toFixed(0)},255)`);
-  }
+  /*   // change colors
+    chartsColors.length = 0;
+    for (let i = 0; i < 10; i++) {
+      chartsColors.push(`rgba(${(Math.random() * 255).toFixed(0)},${(Math.random() * 255).toFixed(0)},${(Math.random() * 255).toFixed(0)},255)`);
+    } */
+  chartsColors.sort(() => 0.5 - Math.random());
 
   // clear jsons
   jsons.length = 0;
@@ -79,6 +88,7 @@ function setupNewImport(){
 function displayData() {
 
   displayQuedas();
+  displayQuedasVulcao();
 
   function displayQuedas() {
     var section = insertSection("Quedas");
@@ -86,33 +96,72 @@ function displayData() {
 
     for (let i = 0; i < jsons.length; i++) {
       const logFile = jsons[i];
+      const canvas = canvases[i];
+      const ctx = canvas.getContext("2d");
 
-      var canvas = canvases[i];
-      var ctx = canvas.getContext("2d");
-
-      var data = logFile.logEntries.map(log => log.stats.falls);
+      var datasets = [
+        {
+          label: logFile.fileName,
+          data: logFile.logEntries.map(log => log.stats.falls),
+          fill: false,
+          borderColor: chartsColors[i],
+          xAxisID: 'xAxis'
+        }
+      ]
       var labels = logFile.logEntries.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
-      var color = chartsColors[i];
-      plotLinear(ctx, logFile.fileName, data, labels, color);
+
+      plotLinear(ctx, datasets, labels);
     }
+  }
+
+  function displayQuedasVulcao() {
+    var section = insertSection("Quedas Vulcao");
+    var canvases = insertCharts(section, 1, false);
+
+    const canvas = canvases[0];
+    const ctx = canvas.getContext("2d");
+    let datasets = [];
+    let stages = [1, 2, 3, 4];
+
+    for (let i = 0; i < jsons.length; i++) {
+      const logFile = jsons[i];
+
+      let data = [];
+      let volcano_stages = logFile.logEntries.filter(item => item.levelInfo.world == "Volcano");
+
+      for (let j = 0; j < stages.length; j++) {
+        let stages_subset = volcano_stages.filter(item => item.levelInfo.level == stages[j]).map(item => item.stats.falls);
+        if (stages_subset.length > 0) {
+          let sum = stages_subset.reduce(function (a, b) { return a + b; });
+          data.push(sum / stages_subset.length);
+        } else {
+          data.push(null);
+        }
+      }
+
+      var labels = stages.map(stage => "Volcano" + "_" + stage);
+      datasets.push(
+        {
+          label: logFile.fileName,
+          data: data,
+          fill: false,
+          borderColor: chartsColors[i],
+          xAxisID: 'xAxis'
+        }
+      );
+    }
+    plotLinear(ctx, datasets, labels);
   }
 }
 
+
 // plot linear chart
-function plotLinear(ctx, name, data, labels, color) {
+function plotLinear(ctx, datasets, labels) {
   return new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
-      datasets: [
-        {
-          label: name,
-          data: data,
-          fill: false,
-          borderColor: color,
-          xAxisID: 'xAxis'
-        }
-      ]
+      datasets: datasets,
     },
     options: {
       elements: {
@@ -184,9 +233,11 @@ function insertCharts(section, numberOfCanvas, twoAtLine) {
         canvasParent.classList.add("center-align", "canvasParent");
         chartElement.appendChild(canvasParent);
 
-        let canvas = document.createElement("canvas");
-        canvasParent.appendChild(canvas);
-        canvasResult.push(canvas);
+        if (i < numberOfCanvas) {
+          let canvas = document.createElement("canvas");
+          canvasParent.appendChild(canvas);
+          canvasResult.push(canvas);
+        }
         i++;
       }
     } else {
@@ -216,7 +267,7 @@ function insertCharts(section, numberOfCanvas, twoAtLine) {
 function readJSONLocal() {
   setupNewImport();
 
-  const files = ["data/log.json","data/log_Daniel.json","data/log_Dawson.json","data/log_Stefan.json", "data/log_Connor.json"];
+  const files = ["data/log.json", "data/log_Daniel.json", "data/log_Dawson.json", "data/log_Stefan.json", "data/log_Connor.json"];
   let count = 0;
   for (let i = 0; i < files.length; i++) {
     const fileName = files[i];
