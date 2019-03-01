@@ -1,17 +1,17 @@
-var unifiedJSON = { logEntries: [] };
-var jsons = [];
-var downloadWrapper = document.getElementById('download');
-var uploadWrapper = document.getElementById('upload');
-var navMenu = document.querySelector('.nav-wrapper ul');
+const jsons = [];
+const downloadWrapper = document.getElementById('download');
+const uploadWrapper = document.getElementById('upload');
+const navMenu = document.querySelector('.nav-wrapper ul');
+let gridCharts = true;
 
 var chartsColors = [
-  "rgba(148,0,211,1)",
-  "rgba(75,0,130,1)",
-  "rgba(0,0,255,1)",
-  "rgba(0,255,0,1)",
-  "rgba(255,255,0,1)",
-  "rgba(255,127,0,1)",
-  "rgba(255,0,0,1)",
+  "#9e0202",
+  "#ff9400",
+  "#60ad01",
+  "#01ad96",
+  "#0056d8",
+  "#6f39f9",
+  "#91039e",
 ];
 
 function uploadLogs(e) {
@@ -19,18 +19,6 @@ function uploadLogs(e) {
   uploadWrapper.querySelector('a').classList.remove("pulse");
 
   readJSONs(e);
-}
-
-function downloadLog() {
-  // stop button pulsing
-  downloadWrapper.querySelector('a').classList.remove("pulse");
-
-  // download
-  var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(unifiedJSON));
-  var dlAnchorElem = document.getElementById('downloadAnchorElem');
-  dlAnchorElem.setAttribute("href", dataStr);
-  dlAnchorElem.setAttribute("download", "wizaviorLog.json");
-  dlAnchorElem.click();
 }
 
 function readJSONs(evt) {
@@ -91,10 +79,12 @@ function displayData() {
 
   displayQuedas();
   displayQuedasVulcao();
+  displayPrimeiraQueda();
+  displayMediaPrimeiraQueda();
 
   function displayQuedas() {
     var section = insertSection("Quedas");
-    var canvases = insertCharts(section, jsons.length, true);
+    var canvases = insertCharts(section, jsons.length, gridCharts);
 
     for (let i = 0; i < jsons.length; i++) {
       const logFile = jsons[i];
@@ -106,7 +96,7 @@ function displayData() {
           label: logFile.fileName,
           data: logFile.logEntries.map(log => log.stats.falls),
           fill: false,
-          borderColor: chartsColors[i],
+          borderColor: getChartColor(i),
           xAxisID: 'xAxis'
         }
       ]
@@ -147,13 +137,45 @@ function displayData() {
           label: logFile.fileName,
           data: data,
           fill: false,
-          borderColor: chartsColors[i],
+          borderColor: getChartColor(i),
           xAxisID: 'xAxis'
         }
       );
     }
     plotLinear(ctx, datasets, labels);
   }
+
+  function displayPrimeiraQueda() {
+    var section = insertSection("Primeira Queda");
+    var canvases = insertCharts(section, jsons.length, gridCharts);
+
+    for (let i = 0; i < jsons.length; i++) {
+      const logFile = jsons[i];
+      const canvas = canvases[i];
+      const ctx = canvas.getContext("2d");
+
+      var datasets = [
+        {
+          label: logFile.fileName,
+          data: logFile.logEntries.map(log => {
+            if (log.fallsTimes.length > 0) {
+              return log.fallsTimes[0]
+            } else {
+              return 0;
+            }
+          }),
+          fill: false,
+          borderColor: getChartColor(i),
+          xAxisID: 'xAxis'
+        }
+      ]
+      var labels = logFile.logEntries.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
+
+      plotLinear(ctx, datasets, labels);
+    }
+  }
+
+  function displayMediaPrimeiraQueda() { };
 }
 
 
@@ -183,9 +205,9 @@ function plotLinear(ctx, datasets, labels) {
         }]
       },
       legend: {
-        position:'bottom',
-        labels:{
-          usePointStyle:true
+        position: 'bottom',
+        labels: {
+          usePointStyle: true
         }
       }
     }
@@ -291,6 +313,9 @@ function insertCharts(section, numberOfCanvas, twoAtLine) {
   return canvasResult;
 }
 
+function getChartColor(i) {
+  return chartsColors[i % chartsColors.length];
+}
 
 function readJSONLocal() {
   setupNewImport();
