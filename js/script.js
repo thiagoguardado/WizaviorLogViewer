@@ -82,6 +82,8 @@ function displayData() {
   displayPrimeiraQueda();
   displayMediaPrimeiraQueda();
 
+  updateScrollSpy();
+
   function displayQuedas() {
     var section = insertSection("Quedas");
     var canvases = insertCharts(section, jsons.length, gridCharts);
@@ -219,7 +221,7 @@ function plotLinear(ctx, datasets, labels) {
 function insertSection(sectionTitle) {
   // create section
   let parent = document.createElement("div");
-  parent.classList.add("chartSection");
+  parent.classList.add("chartSection", "scrollspy");
   parent.setAttribute("id", sectionTitle);
   let titleParent = document.createElement("div");
   titleParent.classList.add("row");
@@ -311,6 +313,11 @@ function insertCharts(section, numberOfCanvas, twoAtLine) {
   }
 
   return canvasResult;
+}
+
+function updateScrollSpy() {
+  var elems = document.querySelectorAll('.scrollspy');
+  var instances = M.ScrollSpy.init(elems, { scrollOffset: 40});
 }
 
 function getChartColor(i) {
