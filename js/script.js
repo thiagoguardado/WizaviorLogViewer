@@ -1,7 +1,8 @@
 const downloadWrapper = document.getElementById('download');
 const uploadWrapper = document.getElementById('upload');
 const navMenu = document.querySelector('.nav-wrapper ul');
-const refSortArray = ["Tutorial","Arctic","Desert","Forest","Volcano","Boss"];
+const sideNav = document.querySelector('ul.sidenav');
+const refSortArray = ["Tutorial", "Arctic", "Desert", "Forest", "Volcano", "Boss"];
 let jsons = [];
 let unifiedJSON = [];
 let gridCharts = true;
@@ -70,6 +71,9 @@ function setupNewImport() {
   while (navMenu.firstChild) {
     navMenu.removeChild(navMenu.firstChild);
   }
+  while(sideNav.firstChild){
+    sideNav.removeChild(sideNav.firstChild);
+  }
 
   // shuffle colors
   chartsColors.sort(() => 0.5 - Math.random());
@@ -93,8 +97,10 @@ function displayData() {
   displayQuedasVulcao();
   displayPrimeiraQueda();
   displayMediaPrimeiraQueda();
+  displayMenorTempoDeQueda();
 
   updateScrollSpy();
+  updateSideNav();
 
   function displayQuedas() {
     var section = insertSection("Quedas");
@@ -197,30 +203,30 @@ function displayData() {
       const canvas = canvases[i];
       const ctx = canvas.getContext("2d");
       const logFile = jsons[i];
-      logFile.logEntries.sort(sortLofFile);
+      logFile.logEntries.sort(sortLogFile);
 
       let infos = logFile.logEntries.reduce((acc, cur) => {
         let newitem = { world: cur.levelInfo.world, level: cur.levelInfo.level };
         if (!acc.includes(newitem)) {
-          let firstFall = cur.fallsTimes.length == 0 ? 0 : cur.fallsTimes[0];
-          acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, firstfall: firstFall });
+          if(cur.fallsTimes.length != 0)
+            acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, firstfall: cur.fallsTimes[0] });
         }
         return acc;
       }, []);
 
       let stages = [...new Set(infos.map(info => info.key))];
-      let data = stages.map(stage=>{
-        return infos.filter(info=>info.key == stage).reduce((total, current, index, array) => {
+      let data = stages.map(stage => {
+        return infos.filter(info => info.key == stage).reduce((total, current, index, array) => {
           total += current.firstfall;
-          if( index === array.length-1) { 
-            return total/array.length;
-          }else { 
+          if (index === array.length - 1) {
+            return total / array.length;
+          } else {
             return total;
           }
-        },0);
+        }, 0);
       })
 
-      let datasets= [
+      let datasets = [
         {
           label: logFile.fileName,
           data: data,
@@ -228,10 +234,52 @@ function displayData() {
           borderColor: getChartColor(i),
           xAxisID: 'xAxis'
         }
-      ]; 
+      ];
       plotLinear(ctx, datasets, stages);
     }
   };
+
+  function displayMenorTempoDeQueda() {
+    var section = insertSection("Menor Tempo Queda");
+    var canvases = insertCharts(section, jsons.length, gridCharts);
+
+    for (let i = 0; i < jsons.length; i++) {
+      const canvas = canvases[i];
+      const ctx = canvas.getContext("2d");
+      const logFile = jsons[i];
+      logFile.logEntries.sort(sortLogFile);
+
+      let infos = logFile.logEntries.reduce((acc, cur) => {
+        let newitem = { world: cur.levelInfo.world, level: cur.levelInfo.level };
+        if (!acc.includes(newitem)) {
+          if (cur.fallsTimes.length != 0)
+            acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, fallsTimes: cur.fallsTimes });
+        }
+        return acc;
+      }, []);
+
+      let stages = [...new Set(infos.map(info => info.key))];
+      let data = stages.map(stage => {
+        let stageInfos = infos.filter(info => info.key == stage);
+        let stageFallsTimes = stageInfos.reduce((acc, cur) => {
+          acc.push(...cur.fallsTimes.filter(time => time >= 0));
+          return acc
+        }, []);
+        let fastestFall = Math.min(...stageFallsTimes).toFixed(1);
+        return fastestFall;
+      })
+
+      let datasets = [
+        {
+          label: logFile.fileName,
+          data: data,
+          fill: false,
+          backgroundColor: stages.map((stage, index) => getChartColor(index)),
+        }
+      ];
+      plotRadar(ctx, datasets, stages, logFile.fileName);
+    }
+  }
 }
 
 
@@ -270,6 +318,34 @@ function plotLinear(ctx, datasets, labels) {
   });
 }
 
+function plotRadar(ctx, datasets, labels, title) {
+  return new Chart(ctx, {
+    type: 'polarArea',
+    data: {
+      labels: labels,
+      datasets: datasets,
+    },
+    options: {
+      elements: {
+        line: {
+          tension: 0.2, // disables bezier curves
+          borderWidth: 4
+        }
+      },
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true
+        }
+      },
+      title: {
+        display: true,
+        text: title
+      }
+    }
+  });
+}
+
 
 // insere uma nova seção
 function insertSection(sectionTitle) {
@@ -296,6 +372,15 @@ function insertSection(sectionTitle) {
   navItem_a.innerHTML = sectionTitle;
   navItem.appendChild(navItem_a);
   navMenu.appendChild(navItem);
+
+  // add section to side menu
+  navItem = document.createElement("li");
+  navItem_a = document.createElement("a");
+  navItem_a.setAttribute("href", `#${sectionTitle}`)
+  navItem_a.classList.add("sidenav-close");
+  navItem_a.innerHTML = sectionTitle;
+  navItem.appendChild(navItem_a);
+  sideNav.appendChild(navItem);
 
   return parent;
 }
@@ -373,13 +458,17 @@ function updateScrollSpy() {
   var elems = document.querySelectorAll('.scrollspy');
   M.ScrollSpy.init(elems, { throttle: 0, scrollOffset: 40 });
 }
+function updateSideNav(){
+  // M.Sidenav.init(elems, options);
+  new M.Sidenav(sideNav);
+}
 
 function getChartColor(i) {
   return chartsColors[i % chartsColors.length];
 }
 
-function sortLofFile(a,b){
-  return (refSortArray.indexOf(a.levelInfo.world)*100 + a.levelInfo.level) - (refSortArray.indexOf(b.levelInfo.world)*100 + b.levelInfo.level);
+function sortLogFile(a, b) {
+  return (refSortArray.indexOf(a.levelInfo.world) * 100 + a.levelInfo.level) - (refSortArray.indexOf(b.levelInfo.world) * 100 + b.levelInfo.level);
 }
 
 function readJSONLocal() {
