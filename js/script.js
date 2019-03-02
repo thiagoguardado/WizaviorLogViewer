@@ -1,7 +1,9 @@
-const jsons = [];
 const downloadWrapper = document.getElementById('download');
 const uploadWrapper = document.getElementById('upload');
 const navMenu = document.querySelector('.nav-wrapper ul');
+const refSortArray = ["Tutorial","Arctic","Desert","Forest","Volcano","Boss"];
+let jsons = [];
+let unifiedJSON = [];
 let gridCharts = true;
 
 var chartsColors = [
@@ -47,6 +49,7 @@ function readJSONs(evt) {
       json.fileName = file.name;
       jsons.push(json);
       if (jsons.length >= countReads) {
+        concatenateJSONs();
         displayData();
       }
     };
@@ -73,6 +76,15 @@ function setupNewImport() {
 
   // clear jsons
   jsons.length = 0;
+}
+
+function concatenateJSONs() {
+  unifiedJSON.length = 0;
+
+  jsons.map(json => {
+    json.logEntries.map(entry => entry.fileName = json.fileName);
+    unifiedJSON.push(...json.logEntries);
+  });
 }
 
 function displayData() {
@@ -177,7 +189,49 @@ function displayData() {
     }
   }
 
-  function displayMediaPrimeiraQueda() { };
+  function displayMediaPrimeiraQueda() {
+    var section = insertSection("Média Primeira Queda");
+    var canvases = insertCharts(section, jsons.length, gridCharts);
+
+    for (let i = 0; i < jsons.length; i++) {
+      const canvas = canvases[i];
+      const ctx = canvas.getContext("2d");
+      const logFile = jsons[i];
+      logFile.logEntries.sort(sortLofFile);
+
+      let infos = logFile.logEntries.reduce((acc, cur) => {
+        let newitem = { world: cur.levelInfo.world, level: cur.levelInfo.level };
+        if (!acc.includes(newitem)) {
+          let firstFall = cur.fallsTimes.length == 0 ? 0 : cur.fallsTimes[0];
+          acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, firstfall: firstFall });
+        }
+        return acc;
+      }, []);
+
+      let stages = [...new Set(infos.map(info => info.key))];
+      let data = stages.map(stage=>{
+        return infos.filter(info=>info.key == stage).reduce((total, current, index, array) => {
+          total += current.firstfall;
+          if( index === array.length-1) { 
+            return total/array.length;
+          }else { 
+            return total;
+          }
+        },0);
+      })
+
+      let datasets= [
+        {
+          label: logFile.fileName,
+          data: data,
+          fill: false,
+          borderColor: getChartColor(i),
+          xAxisID: 'xAxis'
+        }
+      ]; 
+      plotLinear(ctx, datasets, stages);
+    }
+  };
 }
 
 
@@ -317,11 +371,15 @@ function insertCharts(section, numberOfCanvas, twoAtLine) {
 
 function updateScrollSpy() {
   var elems = document.querySelectorAll('.scrollspy');
-  var instances = M.ScrollSpy.init(elems, { scrollOffset: 40});
+  M.ScrollSpy.init(elems, { throttle: 0, scrollOffset: 40 });
 }
 
 function getChartColor(i) {
   return chartsColors[i % chartsColors.length];
+}
+
+function sortLofFile(a,b){
+  return (refSortArray.indexOf(a.levelInfo.world)*100 + a.levelInfo.level) - (refSortArray.indexOf(b.levelInfo.world)*100 + b.levelInfo.level);
 }
 
 function readJSONLocal() {
@@ -345,6 +403,7 @@ function readJSONLocal() {
           json.fileName = fileName;
           jsons.push(json);
           if (jsons.length >= count) {
+            concatenateJSONs();
             displayData();
           }
         });
