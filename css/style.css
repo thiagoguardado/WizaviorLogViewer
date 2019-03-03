@@ -16,6 +16,9 @@ html {
   margin: 0 auto;
   margin-bottom: 20px;
 }
+.canvasParent.radar{
+  max-width:500px;
+}
 .chartSection{
   border-top: 1px solid gray;
   padding: 5px 0;

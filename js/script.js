@@ -71,7 +71,7 @@ function setupNewImport() {
   while (navMenu.firstChild) {
     navMenu.removeChild(navMenu.firstChild);
   }
-  while(sideNav.firstChild){
+  while (sideNav.firstChild) {
     sideNav.removeChild(sideNav.firstChild);
   }
 
@@ -98,6 +98,7 @@ function displayData() {
   displayPrimeiraQueda();
   displayMediaPrimeiraQueda();
   displayMenorTempoDeQueda();
+  displayVitoriasDerrotas();
 
   updateScrollSpy();
   updateSideNav();
@@ -109,7 +110,6 @@ function displayData() {
     for (let i = 0; i < jsons.length; i++) {
       const logFile = jsons[i];
       const canvas = canvases[i];
-      const ctx = canvas.getContext("2d");
 
       var datasets = [
         {
@@ -122,7 +122,7 @@ function displayData() {
       ]
       var labels = logFile.logEntries.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
 
-      plotLinear(ctx, datasets, labels);
+      plotLinear(canvas, datasets, labels);
     }
   }
 
@@ -131,7 +131,6 @@ function displayData() {
     var canvases = insertCharts(section, 1, false);
 
     const canvas = canvases[0];
-    const ctx = canvas.getContext("2d");
     let datasets = [];
     let stages = [1, 2, 3, 4];
 
@@ -162,7 +161,7 @@ function displayData() {
         }
       );
     }
-    plotLinear(ctx, datasets, labels);
+    plotLinear(canvas, datasets, labels);
   }
 
   function displayPrimeiraQueda() {
@@ -172,7 +171,6 @@ function displayData() {
     for (let i = 0; i < jsons.length; i++) {
       const logFile = jsons[i];
       const canvas = canvases[i];
-      const ctx = canvas.getContext("2d");
 
       var datasets = [
         {
@@ -191,7 +189,7 @@ function displayData() {
       ]
       var labels = logFile.logEntries.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
 
-      plotLinear(ctx, datasets, labels);
+      plotLinear(canvas, datasets, labels);
     }
   }
 
@@ -201,14 +199,13 @@ function displayData() {
 
     for (let i = 0; i < jsons.length; i++) {
       const canvas = canvases[i];
-      const ctx = canvas.getContext("2d");
       const logFile = jsons[i];
       logFile.logEntries.sort(sortLogFile);
 
       let infos = logFile.logEntries.reduce((acc, cur) => {
         let newitem = { world: cur.levelInfo.world, level: cur.levelInfo.level };
         if (!acc.includes(newitem)) {
-          if(cur.fallsTimes.length != 0)
+          if (cur.fallsTimes.length != 0)
             acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, firstfall: cur.fallsTimes[0] });
         }
         return acc;
@@ -235,7 +232,7 @@ function displayData() {
           xAxisID: 'xAxis'
         }
       ];
-      plotLinear(ctx, datasets, stages);
+      plotLinear(canvas, datasets, stages);
     }
   };
 
@@ -245,7 +242,6 @@ function displayData() {
 
     for (let i = 0; i < jsons.length; i++) {
       const canvas = canvases[i];
-      const ctx = canvas.getContext("2d");
       const logFile = jsons[i];
       logFile.logEntries.sort(sortLogFile);
 
@@ -277,14 +273,46 @@ function displayData() {
           backgroundColor: stages.map((stage, index) => getChartColor(index)),
         }
       ];
-      plotRadar(ctx, datasets, stages, logFile.fileName);
+      plotRadar(canvas, datasets, stages, logFile.fileName);
+    }
+  }
+
+  function displayVitoriasDerrotas() {
+    var section = insertSection("Vitórias");
+    var canvases = insertCharts(section, jsons.length, gridCharts);
+
+    for (let i = 0; i < jsons.length; i++) {
+      const logFile = jsons[i];
+      const canvas = canvases[i];
+
+      const endedLogs = logFile.logEntries.filter(log => log.levelResult == 'win' || log.levelResult == 'lose')
+
+      var datasets = [
+        {
+          label: logFile.fileName,
+          data: endedLogs.map(log => {
+            if (log.levelResult == 'win') return 1;
+            else return 0;
+          }),
+          fill: false,
+          borderColor: getChartColor(i),
+          xAxisID: 'xAxis'
+        }
+      ]
+      var labels = endedLogs.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
+
+      plotLinear(canvas, datasets, labels);
     }
   }
 }
 
 
+
+
 // plot linear chart
-function plotLinear(ctx, datasets, labels) {
+function plotLinear(canvas, datasets, labels) {
+  canvas.parentNode.classList.add('linear');
+  const ctx = canvas.getContext('2d');
   return new Chart(ctx, {
     type: 'line',
     data: {
@@ -318,7 +346,10 @@ function plotLinear(ctx, datasets, labels) {
   });
 }
 
-function plotRadar(ctx, datasets, labels, title) {
+// plot radar chart
+function plotRadar(canvas, datasets, labels, title) {
+  canvas.parentNode.classList.add('radar');
+  const ctx = canvas.getContext('2d');
   return new Chart(ctx, {
     type: 'polarArea',
     data: {
@@ -341,7 +372,8 @@ function plotRadar(ctx, datasets, labels, title) {
       title: {
         display: true,
         text: title
-      }
+      },
+      aspectRatio: 1
     }
   });
 }
@@ -407,7 +439,6 @@ function insertCharts(section, numberOfCanvas, twoAtLine) {
 
     let chartElement;
     if (twoAtLine) {
-
       for (let j = 0; j < 2; j++) {
         if (i >= numberOfCanvas) {
           let left = document.createElement("div");
@@ -458,7 +489,7 @@ function updateScrollSpy() {
   var elems = document.querySelectorAll('.scrollspy');
   M.ScrollSpy.init(elems, { throttle: 0, scrollOffset: 40 });
 }
-function updateSideNav(){
+function updateSideNav() {
   // M.Sidenav.init(elems, options);
   new M.Sidenav(sideNav);
 }
@@ -485,7 +516,7 @@ function readJSONLocal() {
     xhr.responseType = 'blob';
     xhr.onload = function (e) {
       if (this.status == 200) {
-        const file = new File([this.response], 'temp');
+        const file = new Blob([this.response], { type: 'text' });
         const fileReader = new FileReader();
         fileReader.addEventListener('load', function () {
           const json = JSON.parse(fileReader.result);
