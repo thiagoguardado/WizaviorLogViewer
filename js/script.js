@@ -99,13 +99,14 @@ function displayData() {
   displayMediaPrimeiraQueda();
   displayMenorTempoDeQueda();
   displayVitoriasDerrotas();
+  displayTriesBeforeWin();
 
   updateScrollSpy();
   updateSideNav();
 
   function displayQuedas() {
-    var section = insertSection("Quedas");
-    var canvases = insertCharts(section, jsons.length, gridCharts);
+    const section = insertSection("Quedas");
+    const canvases = insertCharts(section, jsons.length, gridCharts);
 
     for (let i = 0; i < jsons.length; i++) {
       const logFile = jsons[i];
@@ -127,8 +128,8 @@ function displayData() {
   }
 
   function displayQuedasVulcao() {
-    var section = insertSection("Quedas Vulcão");
-    var canvases = insertCharts(section, 1, false);
+    const section = insertSection("Quedas Vulcão");
+    const canvases = insertCharts(section, 1, false);
 
     const canvas = canvases[0];
     let datasets = [];
@@ -165,8 +166,8 @@ function displayData() {
   }
 
   function displayPrimeiraQueda() {
-    var section = insertSection("Primeira Queda");
-    var canvases = insertCharts(section, jsons.length, gridCharts);
+    const section = insertSection("Primeira Queda");
+    const canvases = insertCharts(section, jsons.length, gridCharts);
 
     for (let i = 0; i < jsons.length; i++) {
       const logFile = jsons[i];
@@ -194,8 +195,8 @@ function displayData() {
   }
 
   function displayMediaPrimeiraQueda() {
-    var section = insertSection("Média Primeira Queda");
-    var canvases = insertCharts(section, jsons.length, gridCharts);
+    const section = insertSection("Média Primeira Queda");
+    const canvases = insertCharts(section, jsons.length, gridCharts);
 
     for (let i = 0; i < jsons.length; i++) {
       const canvas = canvases[i];
@@ -237,8 +238,8 @@ function displayData() {
   };
 
   function displayMenorTempoDeQueda() {
-    var section = insertSection("Menor Tempo Queda");
-    var canvases = insertCharts(section, jsons.length, gridCharts);
+    const section = insertSection("Menor Tempo Queda");
+    const canvases = insertCharts(section, jsons.length, gridCharts);
 
     for (let i = 0; i < jsons.length; i++) {
       const canvas = canvases[i];
@@ -278,13 +279,12 @@ function displayData() {
   }
 
   function displayVitoriasDerrotas() {
-    var section = insertSection("Vitórias");
-    var canvases = insertCharts(section, jsons.length, gridCharts);
+    const section = insertSection("Vitórias");
+    const canvases = insertCharts(section, jsons.length, gridCharts);
 
     for (let i = 0; i < jsons.length; i++) {
       const logFile = jsons[i];
       const canvas = canvases[i];
-
       const endedLogs = logFile.logEntries.filter(log => log.levelResult == 'win' || log.levelResult == 'lose')
 
       var datasets = [
@@ -303,6 +303,48 @@ function displayData() {
 
       plotLinear(canvas, datasets, labels);
     }
+  }
+
+  function displayTriesBeforeWin() {
+    const section = insertSection("Tentativas Para Ganhar");
+    const canvases = insertCharts(section, 1, false);
+
+    const labels = [...new Set(unifiedJSON.sort(sortLogFile).map(log => log.levelInfo.world + "_" + log.levelInfo.level))];
+    let datasets = [];
+
+    for (let i = 0; i < jsons.length; i++) {
+      const logFile = jsons[i];
+
+      let data = [];
+      for (let j = 0; j < labels.length; j++) {
+        const label = labels[j];
+        let filtered = logFile.logEntries.filter(log => (log.levelInfo.world + "_" + log.levelInfo.level) == label);
+        let tries = 0;
+        let won = false;
+        for (let k = 0; k < filtered.length; k++) {
+          const entry = filtered[k];
+          tries++;
+          if (entry.levelResult == 'win') {
+            won = true;
+            break;
+          }
+        }
+        if(!won) tries = 0;
+        data.push(tries);
+      }
+
+      datasets.push(
+        {
+          label: logFile.fileName,
+          data: data,
+          fill: true,
+          borderColor: getChartColor(i),
+          backgroundColor:  getChartColor(i)
+        }
+      )
+    }
+    
+    plotBar(canvases[0], datasets, labels);
   }
 }
 
@@ -375,6 +417,18 @@ function plotRadar(canvas, datasets, labels, title) {
       },
       aspectRatio: 1
     }
+  });
+}
+
+function plotBar(canvas,datasets,labels){
+  canvas.parentNode.classList.add('bar');
+  const ctx = canvas.getContext('2d');
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: datasets,
+    },
   });
 }
 
