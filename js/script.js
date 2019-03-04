@@ -106,14 +106,16 @@ function displayData() {
   displayVitoriasDerrotas();
   displayTentativas();
   displayNotas();
+  displayPortalGap();
   displayMediaNotas();
+  displayMediaPortalGap();
   displayEnergia();
 
   updateScrollSpy();
   updateSideNav();
 
   function displayQuedas() {
-    const section = insertSection("Quedas");
+    const section = insertSection("Quedas", "Quantidade total de quedas em cada partida");
     const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
@@ -136,7 +138,7 @@ function displayData() {
   }
 
   function displayQuedasVulcao() {
-    const section = insertSection("Quedas Vulcão");
+    const section = insertSection("Quedas Vulcão", "Quantidade média de quedas em cada fase do vulcão");
     const canvases = insertCharts(section, 1, false);
 
     const canvas = canvases[0];
@@ -174,7 +176,7 @@ function displayData() {
   }
 
   function displayPrimeiraQueda() {
-    const section = insertSection("Primeira Queda");
+    const section = insertSection("Primeira Queda", "Tempo decorrido até a primeira queda em cada partida");
     const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
@@ -203,7 +205,7 @@ function displayData() {
   }
 
   function displayMediaPrimeiraQueda() {
-    const section = insertSection("Média Primeira Queda");
+    const section = insertSection("Média Primeira Queda", "Média do tempo da primeira queda em cada fase");
     const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
@@ -246,7 +248,7 @@ function displayData() {
   };
 
   function displayMenorTempoDeQueda() {
-    const section = insertSection("Menor Tempo Queda");
+    const section = insertSection("Menor Tempo Queda", "Menor tempo decorrido até a primeira queda em cada fase");
     const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
@@ -287,7 +289,7 @@ function displayData() {
   }
 
   function displayVitoriasDerrotas() {
-    const section = insertSection("Vitórias");
+    const section = insertSection("Vitórias", "resultado de cada partida finalizada");
     const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
@@ -319,7 +321,7 @@ function displayData() {
   }
 
   function displayTentativas() {
-    const section = insertSection("Tentativas Para Ganhar");
+    const section = insertSection("Tentativas Para Ganhar", "Número de vezes que jogou uma fase até ganhar a primeira vez");
     const canvases = insertCharts(section, 1, false);
 
     const labels = [...new Set(jsons.reduce((acc, cur) => {
@@ -364,7 +366,7 @@ function displayData() {
   }
 
   function displayNotas() {
-    const section = insertSection("Notas");
+    const section = insertSection("Notas", "Notas finais de cada partida");
     const canvases = insertCharts(section, filteredJsons.length, false);
 
     let gradeToNumber = function (grade) {
@@ -426,6 +428,29 @@ function displayData() {
     }
   }
 
+  function displayPortalGap() {
+    const section = insertSection("Portal Gap", "Abertura do portal ao final de cada partida");
+    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const logFile = filteredJsons[i];
+      const canvas = canvases[i];
+
+      const finishedLevels = logFile.logEntries.filter(log => log.levelResult == 'win' || log.levelResult == 'lose')
+
+      let datasets = [
+        {
+          label: logFile.fileName,
+          data: finishedLevels.map(log => log.portalGap),
+          fill: false,
+          borderColor: getChartColor(i),
+        }]
+      const labels = finishedLevels.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
+
+      plotLinear(canvas, datasets, labels);
+    }
+  }
+
   function displayMediaNotas() {
     const section = insertSection("Notas - Médias");
     const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
@@ -457,11 +482,7 @@ function displayData() {
       finishedLevels.sort(sortLogFile);
 
       let infos = finishedLevels.reduce((acc, cur) => {
-        let newitem = { world: cur.levelInfo.world, level: cur.levelInfo.level };
-        if (!acc.includes(newitem)) {
-          if (cur.fallsTimes.length != 0)
-            acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, performances: cur.performances });
-        }
+        acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, performances: cur.performances });
         return acc;
       }, []);
 
@@ -510,6 +531,42 @@ function displayData() {
       ]
 
       plotBar(canvas, datasets, stages, logFile.fileName, numberToGrade);
+    }
+  }
+
+  function displayMediaPortalGap() {
+    const section = insertSection("Portal Gap - Médio", "Abertura média do portal em cada fase, considerando apenas vitórias");
+    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const canvas = canvases[i];
+      const logFile = filteredJsons[i];
+      let finishedLevels = logFile.logEntries.filter(log => log.levelResult == 'win')
+      finishedLevels.sort(sortLogFile);
+
+      let infos = finishedLevels.reduce((acc, cur) => {
+        acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, portalGap: cur.portalGap });
+        return acc;
+      }, []);
+
+      let stages = [...new Set(infos.map(info => info.key))];
+      let data = stages.map(stage => {
+        let stageInfos = infos.filter(info => info.key == stage);
+        let stagePortalGap = stageInfos.reduce((acc, cur) => {
+          acc += cur.portalGap;
+          return acc;
+        }, 0);
+        stagePortalGap /= stageInfos.length;
+        return stagePortalGap;
+      })
+      let datasets = [
+        {
+          label: "Portal Gap",
+          data: data,
+          fill: false,
+          borderColor: getChartColor(i),
+        }]
+      plotLinear(canvas, datasets, stages);
     }
   }
 
@@ -694,7 +751,7 @@ function plotRadar(canvas, datasets, labels, title) {
 
 
 // insere uma nova seção
-function insertSection(sectionTitle) {
+function insertSection(sectionTitle, sectionDescription) {
   // create section
   let parent = document.createElement("div");
   parent.classList.add("chartSection", "scrollspy");
@@ -706,10 +763,14 @@ function insertSection(sectionTitle) {
   let title = document.createElement("h1");
   title.classList.add("sectionTitle")
   title.innerHTML = sectionTitle;
+  let description = document.createElement("p");
+  description.classList.add("sectionDescription")
+  description.innerHTML = sectionDescription;
   document.body.appendChild(parent);
   parent.appendChild(titleParent);
   titleParent.appendChild(titleCenter);
   titleCenter.appendChild(title);
+  titleCenter.appendChild(description);
 
   // add section to menu
   let navItem = document.createElement("li");

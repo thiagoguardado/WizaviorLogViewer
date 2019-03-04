@@ -27,6 +27,10 @@ html {
   color:#464545;
   font-weight: bold;
   text-shadow: 3px 2px 9px rgba(150, 150, 150, 1);
+  
+}
+.sectionDescription{
+  color:#464545;
   margin-bottom: 30px;
 }
 nav ul a{
