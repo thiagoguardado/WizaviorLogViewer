@@ -1,11 +1,14 @@
 const downloadWrapper = document.getElementById('download');
 const uploadWrapper = document.getElementById('upload');
+const filterRow = document.getElementById('filter');
+const checkboxes = document.querySelectorAll("#filter input[checked='checked']");
 const navMenu = document.querySelector('.nav-wrapper ul');
 const sideNav = document.querySelector('ul.sidenav');
 const refSortArray = ["Tutorial", "Arctic", "Desert", "Forest", "Volcano", "Boss"];
+let filteredJsons = [];
 let jsons = [];
-let unifiedJSON = [];
 let gridCharts = true;
+let checkboxStatus = {};
 
 var chartsColors = [
   "#9e0202",
@@ -17,6 +20,15 @@ var chartsColors = [
   "#91039e",
 ];
 
+// bind function to filter checkboxes
+Array.from(checkboxes).map(checkbox => {
+  checkboxStatus[checkbox.value] = true;
+  checkbox.addEventListener("change", e => {
+    checkboxStatus[e.target.value] = !checkboxStatus[e.target.value];
+    filterJsons();
+  })
+});
+
 function uploadLogs(e) {
   // stop button pulsing
   uploadWrapper.querySelector('a').classList.remove("pulse");
@@ -26,7 +38,7 @@ function uploadLogs(e) {
 
 function readJSONs(evt) {
 
-  setupNewImport();
+  clearJsons();
 
   let files = evt.target.files; // FileList object
   let countReads = 0;
@@ -50,8 +62,7 @@ function readJSONs(evt) {
       json.fileName = file.name;
       jsons.push(json);
       if (jsons.length >= countReads) {
-        concatenateJSONs();
-        displayData();
+        filterJsons();
       }
     };
 
@@ -60,7 +71,7 @@ function readJSONs(evt) {
   }
 }
 
-function setupNewImport() {
+function clearSections() {
   // clear previous data
   let sections = document.querySelectorAll(".chartSection");
   for (let i = 0; i < sections.length; i++) {
@@ -74,21 +85,15 @@ function setupNewImport() {
   while (sideNav.firstChild) {
     sideNav.removeChild(sideNav.firstChild);
   }
+}
+
+function clearJsons() {
+  // clear jsons
+  jsons.length = 0;
+  filteredJsons.length = 0;
 
   // shuffle colors
   chartsColors.sort(() => 0.5 - Math.random());
-
-  // clear jsons
-  jsons.length = 0;
-}
-
-function concatenateJSONs() {
-  unifiedJSON.length = 0;
-
-  jsons.map(json => {
-    json.logEntries.map(entry => entry.fileName = json.fileName);
-    unifiedJSON.push(...json.logEntries);
-  });
 }
 
 function displayData() {
@@ -109,10 +114,10 @@ function displayData() {
 
   function displayQuedas() {
     const section = insertSection("Quedas");
-    const canvases = insertCharts(section, jsons.length, gridCharts);
+    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
-    for (let i = 0; i < jsons.length; i++) {
-      const logFile = jsons[i];
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const logFile = filteredJsons[i];
       const canvas = canvases[i];
 
       var datasets = [
@@ -138,8 +143,8 @@ function displayData() {
     let datasets = [];
     let stages = [1, 2, 3, 4];
 
-    for (let i = 0; i < jsons.length; i++) {
-      const logFile = jsons[i];
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const logFile = filteredJsons[i];
 
       let data = [];
       let volcano_stages = logFile.logEntries.filter(item => item.levelInfo.world == "Volcano");
@@ -170,10 +175,10 @@ function displayData() {
 
   function displayPrimeiraQueda() {
     const section = insertSection("Primeira Queda");
-    const canvases = insertCharts(section, jsons.length, gridCharts);
+    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
-    for (let i = 0; i < jsons.length; i++) {
-      const logFile = jsons[i];
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const logFile = filteredJsons[i];
       const canvas = canvases[i];
 
       var datasets = [
@@ -199,11 +204,11 @@ function displayData() {
 
   function displayMediaPrimeiraQueda() {
     const section = insertSection("Média Primeira Queda");
-    const canvases = insertCharts(section, jsons.length, gridCharts);
+    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
-    for (let i = 0; i < jsons.length; i++) {
+    for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
-      const logFile = jsons[i];
+      const logFile = filteredJsons[i];
       logFile.logEntries.sort(sortLogFile);
 
       let infos = logFile.logEntries.reduce((acc, cur) => {
@@ -242,11 +247,11 @@ function displayData() {
 
   function displayMenorTempoDeQueda() {
     const section = insertSection("Menor Tempo Queda");
-    const canvases = insertCharts(section, jsons.length, gridCharts);
+    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
-    for (let i = 0; i < jsons.length; i++) {
+    for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
-      const logFile = jsons[i];
+      const logFile = filteredJsons[i];
       logFile.logEntries.sort(sortLogFile);
 
       let infos = logFile.logEntries.reduce((acc, cur) => {
@@ -283,10 +288,10 @@ function displayData() {
 
   function displayVitoriasDerrotas() {
     const section = insertSection("Vitórias");
-    const canvases = insertCharts(section, jsons.length, gridCharts);
+    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
-    for (let i = 0; i < jsons.length; i++) {
-      const logFile = jsons[i];
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const logFile = filteredJsons[i];
       const canvas = canvases[i];
       const endedLogs = logFile.logEntries.filter(log => log.levelResult == 'win' || log.levelResult == 'lose')
 
@@ -317,11 +322,14 @@ function displayData() {
     const section = insertSection("Tentativas Para Ganhar");
     const canvases = insertCharts(section, 1, false);
 
-    const labels = [...new Set(unifiedJSON.sort(sortLogFile).map(log => log.levelInfo.world + "_" + log.levelInfo.level))];
+    const labels = [...new Set(jsons.reduce((acc, cur) => {
+      acc = acc.concat(cur.logEntries);
+      return acc;
+    }, []).sort(sortLogFile).map(log => log.levelInfo.world + "_" + log.levelInfo.level))];
     let datasets = [];
 
-    for (let i = 0; i < jsons.length; i++) {
-      const logFile = jsons[i];
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const logFile = filteredJsons[i];
 
       let data = [];
       for (let j = 0; j < labels.length; j++) {
@@ -357,7 +365,7 @@ function displayData() {
 
   function displayNotas() {
     const section = insertSection("Notas");
-    const canvases = insertCharts(section, jsons.length, false);
+    const canvases = insertCharts(section, filteredJsons.length, false);
 
     let gradeToNumber = function (grade) {
       switch (grade) {
@@ -379,8 +387,8 @@ function displayData() {
       }
     }
 
-    for (let i = 0; i < jsons.length; i++) {
-      const logFile = jsons[i];
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const logFile = filteredJsons[i];
       const canvas = canvases[i];
 
       const finishedLevels = logFile.logEntries.filter(log => log.levelResult == 'win' || log.levelResult == 'lose')
@@ -420,7 +428,7 @@ function displayData() {
 
   function displayMediaNotas() {
     const section = insertSection("Notas - Médias");
-    const canvases = insertCharts(section, jsons.length, gridCharts);
+    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     let gradeToNumber = function (grade) {
       switch (grade) {
@@ -442,9 +450,9 @@ function displayData() {
       }
     }
 
-    for (let i = 0; i < jsons.length; i++) {
+    for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
-      const logFile = jsons[i];
+      const logFile = filteredJsons[i];
       let finishedLevels = logFile.logEntries.filter(log => log.levelResult == 'win' || log.levelResult == 'lose')
       finishedLevels.sort(sortLogFile);
 
@@ -507,13 +515,13 @@ function displayData() {
 
   function displayEnergia() {
     const section = insertSection("Energia");
-    const canvases = insertCharts(section, jsons.length, gridCharts);
+    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
-    
-    for (let i = 0; i < jsons.length; i++) {
+
+    for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
-      const logFile = jsons[i];
-      
+      const logFile = filteredJsons[i];
+
       let finishedLevels = logFile.logEntries.filter(log => log.levelResult == 'win' || log.levelResult == 'lose')
 
       let energiaColetada = finishedLevels.map(entry => {
@@ -536,7 +544,6 @@ function displayData() {
           borderColor: getChartColor(1),
         }
       ]
-      console.log(datasets);
 
       const labels = finishedLevels.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
 
@@ -544,8 +551,6 @@ function displayData() {
     }
   }
 }
-
-
 
 
 // plot linear chart
@@ -586,6 +591,7 @@ function plotLinear(canvas, datasets, labels, title = null, yAxesTickCallback = 
         display: title ? true : false,
         text: title
       },
+      animation: false
     }
   });
 }
@@ -617,7 +623,8 @@ function plotPolarArea(canvas, datasets, labels, title) {
         display: true,
         text: title
       },
-      aspectRatio: 1
+      aspectRatio: 1,
+      animation: false
     }
   });
 }
@@ -658,6 +665,7 @@ function plotBar(canvas, datasets, labels, title = null, yAxesTickCallback = nul
         display: title ? true : false,
         text: title ? title : ''
       },
+      animation: false
     }
   });
 }
@@ -678,7 +686,8 @@ function plotRadar(canvas, datasets, labels, title) {
           usePointStyle: true
         }
       },
-      aspectRatio: 1
+      aspectRatio: 1,
+      animation: false
     }
   })
 }
@@ -807,8 +816,22 @@ function sortLogFile(a, b) {
   return (refSortArray.indexOf(a.levelInfo.world) * 100 + a.levelInfo.level) - (refSortArray.indexOf(b.levelInfo.world) * 100 + b.levelInfo.level);
 }
 
+function filterJsons() {
+  filter.classList.remove("hide");
+
+  filteredJsons = jsons.reduce((acc, cur) => {
+    acc.push({
+      logEntries: cur.logEntries.filter(entry => checkboxStatus[entry.levelInfo.world]),
+      fileName: cur.fileName
+    })
+    return acc;
+  }, []);
+  clearSections();
+  displayData();
+}
+
 function readJSONLocal() {
-  setupNewImport();
+  clearJsons();
 
   const files = ["data/log.json", "data/log_Daniel.json", "data/log_Dawson.json", "data/log_Stefan.json", "data/log_Connor.json"];
   let count = 0;
@@ -828,8 +851,7 @@ function readJSONLocal() {
           json.fileName = fileName;
           jsons.push(json);
           if (jsons.length >= count) {
-            concatenateJSONs();
-            displayData();
+            filterJsons();
           }
         });
         fileReader.readAsText(file);

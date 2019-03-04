@@ -14,7 +14,7 @@
   <link type="text/css" rel="stylesheet" href="css/materialize.css" media="screen,projection" />
 
   <!-- Custom CSS -->
-  <link type="text/css" rel="stylesheet" href="css/style.css?1." media="screen,projection" />
+  <link type="text/css" rel="stylesheet" href="css/style.css?1.4" media="screen,projection" />
 
 </head>
 
@@ -40,11 +40,35 @@
         Logs<input id="file_input" type="file" multiple></a>
     </div>
     <div id="download" class="col s3 center-align hide">
-      <a class="waves-effect waves-light btn-large purple pulse" onclick="downloadLog()"><i
-          class="material-icons left">cloud_download</i>Download Logs</a>
+      <a class="waves-effect waves-light btn-large purple pulse" onclick="downloadLog()"><i class="material-icons left">cloud_download</i>Download
+        Logs</a>
       <a id="downloadAnchorElem" style="display:none"></a>
     </div>
     <div class="col s3"></div>
+  </div>
+  <div id="filter" class="row center hide">
+    <form action="#">
+      <label for="checkboxTutorial">
+        <input id="checkboxTutorial" type="checkbox" checked="checked" value="Tutorial">
+        <span>Tutorial</span>
+      </label>
+      <label>
+        <input type="checkbox" checked="checked"  value="Arctic"/>
+        <span>Arctic</span>
+      </label>
+      <label>
+        <input type="checkbox" checked="checked"  value="Desert"/>
+        <span>Desert</span>
+      </label>
+      <label>
+        <input type="checkbox" checked="checked"  value="Forest"/>
+        <span>Forest</span>
+      </label>
+      <label>
+        <input type="checkbox" checked="checked"  value="Volcano"/>
+        <span>Volcano</span>
+      </label>
+    </form>
   </div>
 
   <!--JavaScript at end of body for optimized loading-->
