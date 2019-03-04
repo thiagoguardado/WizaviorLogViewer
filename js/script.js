@@ -289,7 +289,7 @@ function displayData() {
   }
 
   function displayVitoriasDerrotas() {
-    const section = insertSection("Vitórias", "resultado de cada partida finalizada");
+    const section = insertSection("Vitórias", "Resultado de cada partida finalizada");
     const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
@@ -452,7 +452,7 @@ function displayData() {
   }
 
   function displayMediaNotas() {
-    const section = insertSection("Notas - Médias");
+    const section = insertSection("Notas - Médias","Média das notas em cada fase, considerando partidas finalizadas");
     const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     let gradeToNumber = function (grade) {
@@ -571,7 +571,7 @@ function displayData() {
   }
 
   function displayEnergia() {
-    const section = insertSection("Energia");
+    const section = insertSection("Energia","Energia coletada e depositada em cada partida");
     const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
 
