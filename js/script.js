@@ -99,7 +99,8 @@ function displayData() {
   displayMediaPrimeiraQueda();
   displayMenorTempoDeQueda();
   displayVitoriasDerrotas();
-  displayTriesBeforeWin();
+  displayTentativas();
+  displayNotas();
 
   updateScrollSpy();
   updateSideNav();
@@ -299,13 +300,18 @@ function displayData() {
           xAxisID: 'xAxis'
         }
       ]
-      var labels = endedLogs.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
+      let labels = endedLogs.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
 
-      plotLinear(canvas, datasets, labels);
+      let yAxesCallback = function (label, index, labels) {
+        if (label == 1) return "Vitória";
+        else if (label == 0) return "Derrota";
+      }
+
+      let chart = plotLinear(canvas, datasets, labels, null, yAxesCallback);
     }
   }
 
-  function displayTriesBeforeWin() {
+  function displayTentativas() {
     const section = insertSection("Tentativas Para Ganhar");
     const canvases = insertCharts(section, 1, false);
 
@@ -329,7 +335,7 @@ function displayData() {
             break;
           }
         }
-        if(!won) tries = 0;
+        if (!won) tries = 0;
         data.push(tries);
       }
 
@@ -339,12 +345,75 @@ function displayData() {
           data: data,
           fill: true,
           borderColor: getChartColor(i),
-          backgroundColor:  getChartColor(i)
+          backgroundColor: getChartColor(i)
         }
       )
     }
-    
+
     plotBar(canvases[0], datasets, labels);
+  }
+
+  function displayNotas() {
+    const section = insertSection("Notas");
+    const canvases = insertCharts(section, jsons.length, false);
+
+    let gradeToNumber = function (grade) {
+      switch (grade) {
+        case 'S': return 4;
+        case 'A': return 3;
+        case 'B': return 2;
+        case 'C': return 1;
+        default: return 0
+      }
+    }
+
+    let numberToGrade = function (label, index, labels) {
+      switch (label) {
+        case 4: return 'S';
+        case 3: return 'A';
+        case 2: return 'B';
+        case 1: return 'C';
+        default: return ''
+      }
+    }
+
+    for (let i = 0; i < jsons.length; i++) {
+      const logFile = jsons[i];
+      const canvas = canvases[i];
+
+      const finishedLevels = logFile.logEntries.filter(log => log.levelResult == 'win' || log.levelResult == 'lose')
+
+      var datasets = [
+        {
+          label: 'Crystals',
+          data: finishedLevels.map(log => gradeToNumber(log.performances.crystals)),
+          fill: true,
+          backgroundColor: getChartColor(0),
+        },
+        {
+          label: 'Jumps',
+          data: finishedLevels.map(log => gradeToNumber(log.performances.jumps)),
+          fill: true,
+          backgroundColor: getChartColor(1),
+        },
+        {
+          label: 'Fallls',
+          data: finishedLevels.map(log => gradeToNumber(log.performances.falls)),
+          fill: true,
+          backgroundColor: getChartColor(2),
+        },
+        {
+          label: 'Main Score',
+          data: finishedLevels.map(log => gradeToNumber(log.performances.mainScore)),
+          fill: true,
+          backgroundColor: getChartColor(3),
+        }
+
+      ]
+      const labels = finishedLevels.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
+
+      plotBar(canvas, datasets, labels, logFile.fileName, numberToGrade);
+    }
   }
 }
 
@@ -352,7 +421,7 @@ function displayData() {
 
 
 // plot linear chart
-function plotLinear(canvas, datasets, labels) {
+function plotLinear(canvas, datasets, labels, title = null, yAxesTickCallback = null) {
   canvas.parentNode.classList.add('linear');
   const ctx = canvas.getContext('2d');
   return new Chart(ctx, {
@@ -376,14 +445,19 @@ function plotLinear(canvas, datasets, labels) {
             minRotation: 90,
             maxRotation: 90
           }
-        }]
+        }],
+        yAxes: yAxesTickCallback ? [{ ticks: { callback: yAxesTickCallback } }] : ''
       },
       legend: {
         position: 'bottom',
         labels: {
           usePointStyle: true
         }
-      }
+      },
+      title: {
+        display: title ? true : false,
+        text: title
+      },
     }
   });
 }
@@ -420,7 +494,7 @@ function plotRadar(canvas, datasets, labels, title) {
   });
 }
 
-function plotBar(canvas,datasets,labels){
+function plotBar(canvas, datasets, labels, title = null, yAxesTickCallback = null) {
   canvas.parentNode.classList.add('bar');
   const ctx = canvas.getContext('2d');
   return new Chart(ctx, {
@@ -429,6 +503,34 @@ function plotBar(canvas,datasets,labels){
       labels: labels,
       datasets: datasets,
     },
+    options: {
+      scales: {
+        xAxes: [{
+          ticks: {
+            autoSkip: false,
+            minRotation: 90,
+            maxRotation: 90
+          }
+        }],
+        yAxes: [{
+          type: 'linear',
+          ticks: {
+            beginAtZero: true,
+            callback: yAxesTickCallback ? yAxesTickCallback : (label) => {return label}
+          }
+        }]
+    },
+    legend: {
+      position: 'bottom',
+      labels: {
+        usePointStyle: true
+      }
+    },
+    title: {
+      display: title ? true : false,
+      text: title ? title : ''
+    },
+  }
   });
 }
 
