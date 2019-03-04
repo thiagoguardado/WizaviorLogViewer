@@ -101,6 +101,8 @@ function displayData() {
   displayVitoriasDerrotas();
   displayTentativas();
   displayNotas();
+  displayMediaNotas();
+  displayEnergia();
 
   updateScrollSpy();
   updateSideNav();
@@ -275,7 +277,7 @@ function displayData() {
           backgroundColor: stages.map((stage, index) => getChartColor(index)),
         }
       ];
-      plotRadar(canvas, datasets, stages, logFile.fileName);
+      plotPolarArea(canvas, datasets, stages, logFile.fileName);
     }
   }
 
@@ -415,6 +417,132 @@ function displayData() {
       plotBar(canvas, datasets, labels, logFile.fileName, numberToGrade);
     }
   }
+
+  function displayMediaNotas() {
+    const section = insertSection("Notas - Médias");
+    const canvases = insertCharts(section, jsons.length, gridCharts);
+
+    let gradeToNumber = function (grade) {
+      switch (grade) {
+        case 'S': return 4;
+        case 'A': return 3;
+        case 'B': return 2;
+        case 'C': return 1;
+        default: return 0
+      }
+    }
+
+    let numberToGrade = function (label, index, labels) {
+      switch (label) {
+        case 4: return 'S';
+        case 3: return 'A';
+        case 2: return 'B';
+        case 1: return 'C';
+        default: return ''
+      }
+    }
+
+    for (let i = 0; i < jsons.length; i++) {
+      const canvas = canvases[i];
+      const logFile = jsons[i];
+      let finishedLevels = logFile.logEntries.filter(log => log.levelResult == 'win' || log.levelResult == 'lose')
+      finishedLevels.sort(sortLogFile);
+
+      let infos = finishedLevels.reduce((acc, cur) => {
+        let newitem = { world: cur.levelInfo.world, level: cur.levelInfo.level };
+        if (!acc.includes(newitem)) {
+          if (cur.fallsTimes.length != 0)
+            acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, performances: cur.performances });
+        }
+        return acc;
+      }, []);
+
+      let stages = [...new Set(infos.map(info => info.key))];
+      let dataset = stages.map(stage => {
+        let stageInfos = infos.filter(info => info.key == stage);
+        let stageGrades = stageInfos.reduce((acc, cur) => {
+          acc.crystals += gradeToNumber(cur.performances.crystals);
+          acc.jumps += gradeToNumber(cur.performances.jumps);
+          acc.falls += gradeToNumber(cur.performances.falls);
+          acc.mainScore += gradeToNumber(cur.performances.mainScore);
+          return acc;
+        }, { crystals: 0, jumps: 0, falls: 0, mainScore: 0 });
+        stageGrades.crystals /= stageInfos.length;
+        stageGrades.jumps /= stageInfos.length;
+        stageGrades.falls /= stageInfos.length;
+        stageGrades.mainScore /= stageInfos.length;
+        return stageGrades;
+      })
+
+      let datasets = [
+        {
+          label: 'Crystals',
+          data: dataset.map(data => data.crystals),
+          fill: true,
+          backgroundColor: getChartColor(0),
+        },
+        {
+          label: 'Jumps',
+          data: dataset.map(data => data.jumps),
+          fill: true,
+          backgroundColor: getChartColor(1),
+        },
+        {
+          label: 'Fallls',
+          data: dataset.map(data => data.falls),
+          fill: true,
+          backgroundColor: getChartColor(2),
+        },
+        {
+          label: 'Main Score',
+          data: dataset.map(data => data.mainScore),
+          fill: true,
+          backgroundColor: getChartColor(3),
+        }
+      ]
+
+      plotBar(canvas, datasets, stages, logFile.fileName, numberToGrade);
+    }
+  }
+
+  function displayEnergia() {
+    const section = insertSection("Energia");
+    const canvases = insertCharts(section, jsons.length, gridCharts);
+
+    
+    for (let i = 0; i < jsons.length; i++) {
+      const canvas = canvases[i];
+      const logFile = jsons[i];
+      
+      let finishedLevels = logFile.logEntries.filter(log => log.levelResult == 'win' || log.levelResult == 'lose')
+
+      let energiaColetada = finishedLevels.map(entry => {
+        return entry.stats.crystals1Collected +
+          entry.stats.crystals2Collected * 2 + entry.stats.crystals3Collected * 3;
+      })
+      let energiaDepositada = finishedLevels.map(entry => entry.stats.energyDeployed);
+
+      let datasets = [
+        {
+          label: 'Energia Coletada',
+          data: energiaColetada,
+          fill: false,
+          borderColor: getChartColor(0),
+        },
+        {
+          label: 'Energia Depositada',
+          data: energiaDepositada,
+          fill: false,
+          borderColor: getChartColor(1),
+        }
+      ]
+      console.log(datasets);
+
+      const labels = finishedLevels.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
+
+      plotRadar(canvas, datasets, labels, logFile.fileName);
+    }
+  }
 }
 
 
@@ -463,8 +591,8 @@ function plotLinear(canvas, datasets, labels, title = null, yAxesTickCallback = 
 }
 
 // plot radar chart
-function plotRadar(canvas, datasets, labels, title) {
-  canvas.parentNode.classList.add('radar');
+function plotPolarArea(canvas, datasets, labels, title) {
+  canvas.parentNode.classList.add('polarArea');
   const ctx = canvas.getContext('2d');
   return new Chart(ctx, {
     type: 'polarArea',
@@ -516,22 +644,43 @@ function plotBar(canvas, datasets, labels, title = null, yAxesTickCallback = nul
           type: 'linear',
           ticks: {
             beginAtZero: true,
-            callback: yAxesTickCallback ? yAxesTickCallback : (label) => {return label}
+            callback: yAxesTickCallback ? yAxesTickCallback : (label) => { return label }
           }
         }]
-    },
-    legend: {
-      position: 'bottom',
-      labels: {
-        usePointStyle: true
-      }
-    },
-    title: {
-      display: title ? true : false,
-      text: title ? title : ''
-    },
-  }
+      },
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true
+        }
+      },
+      title: {
+        display: title ? true : false,
+        text: title ? title : ''
+      },
+    }
   });
+}
+
+function plotRadar(canvas, datasets, labels, title) {
+  canvas.parentNode.classList.add('radar');
+  const ctx = canvas.getContext('2d');
+  return new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true
+        }
+      },
+      aspectRatio: 1
+    }
+  })
 }
 
 
