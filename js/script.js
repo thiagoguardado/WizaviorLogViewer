@@ -9,6 +9,7 @@ let filteredJsons = [];
 let jsons = [];
 let gridCharts = true;
 let checkboxStatus = {};
+let dropID = 0;
 
 var chartsColors = [
   "#9e0202",
@@ -20,6 +21,7 @@ var chartsColors = [
   "#91039e",
 ];
 
+
 // bind function to filter checkboxes
 Array.from(checkboxes).map(checkbox => {
   checkboxStatus[checkbox.value] = true;
@@ -28,6 +30,7 @@ Array.from(checkboxes).map(checkbox => {
     filterJsons();
   })
 });
+
 
 function uploadLogs(e) {
   // stop button pulsing
@@ -98,25 +101,30 @@ function clearJsons() {
 
 function displayData() {
 
-  displayQuedas();
-  displayQuedasVulcao();
-  displayPrimeiraQueda();
-  displayMediaPrimeiraQueda();
-  displayMenorTempoDeQueda();
-  displayVitoriasDerrotas();
-  displayTentativas();
-  displayNotas();
-  displayPortalGap();
-  displayMediaNotas();
-  displayMediaPortalGap();
-  displayEnergia();
+  let analiseQuedas = insertSection(`Análise de Quedas`);
+  displayQuedas(analiseQuedas);
+  displayQuedasVulcao(analiseQuedas);
+  displayPrimeiraQueda(analiseQuedas);
+  displayMediaPrimeiraQueda(analiseQuedas);
+  displayMenorTempoDeQueda(analiseQuedas);
+  let analiseVitorias = insertSection(`Análise de Resultado`);
+  displayVitoriasDerrotas(analiseVitorias);
+  displayTentativas(analiseVitorias);
+  let analisePerformance = insertSection(`Análise de Performance`);
+  displayNotas(analisePerformance);
+  displayPortalGap(analisePerformance);
+  displayMediaNotas(analisePerformance);
+  displayMediaPortalGap(analisePerformance);
+  displayEnergia(analisePerformance);
 
   updateScrollSpy();
   updateSideNav();
+  updateDropdowns();
 
-  function displayQuedas() {
-    const section = insertSection("Quedas", "Quantidade total de quedas em cada partida");
-    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+
+  function displayQuedas(section) {
+    const subsection = insertSubsection(section, "Quedas", "Quantidade total de quedas em cada partida");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const logFile = filteredJsons[i];
@@ -137,9 +145,9 @@ function displayData() {
     }
   }
 
-  function displayQuedasVulcao() {
-    const section = insertSection("Quedas Vulcão", "Quantidade média de quedas em cada fase do vulcão");
-    const canvases = insertCharts(section, 1, false);
+  function displayQuedasVulcao(section) {
+    const subsection = insertSubsection(section, "Quedas Vulcão", "Quantidade média de quedas em cada fase do vulcão");
+    const canvases = insertCharts(subsection, 1, false);
 
     const canvas = canvases[0];
     let datasets = [];
@@ -175,9 +183,9 @@ function displayData() {
     plotLinear(canvas, datasets, labels);
   }
 
-  function displayPrimeiraQueda() {
-    const section = insertSection("Primeira Queda", "Tempo decorrido até a primeira queda em cada partida");
-    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+  function displayPrimeiraQueda(section) {
+    const subsection = insertSubsection(section, "Primeira Queda", "Tempo decorrido até a primeira queda em cada partida");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const logFile = filteredJsons[i];
@@ -204,9 +212,9 @@ function displayData() {
     }
   }
 
-  function displayMediaPrimeiraQueda() {
-    const section = insertSection("Média Primeira Queda", "Média do tempo da primeira queda em cada fase");
-    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+  function displayMediaPrimeiraQueda(section) {
+    const subsection = insertSubsection(section, "Média Primeira Queda", "Média do tempo da primeira queda em cada fase");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -247,9 +255,9 @@ function displayData() {
     }
   };
 
-  function displayMenorTempoDeQueda() {
-    const section = insertSection("Menor Tempo Queda", "Menor tempo decorrido até a primeira queda em cada fase");
-    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+  function displayMenorTempoDeQueda(section) {
+    const subsection = insertSubsection(section, "Menor Tempo Queda", "Menor tempo decorrido até a primeira queda em cada fase");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -288,9 +296,9 @@ function displayData() {
     }
   }
 
-  function displayVitoriasDerrotas() {
-    const section = insertSection("Vitórias", "Resultado de cada partida finalizada");
-    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+  function displayVitoriasDerrotas(section) {
+    const subsection = insertSubsection(section, "Vitórias", "Resultado de cada partida finalizada");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const logFile = filteredJsons[i];
@@ -320,9 +328,9 @@ function displayData() {
     }
   }
 
-  function displayTentativas() {
-    const section = insertSection("Tentativas Para Ganhar", "Número de vezes que jogou uma fase até ganhar a primeira vez");
-    const canvases = insertCharts(section, 1, false);
+  function displayTentativas(section) {
+    const subsection = insertSubsection(section, "Tentativas Para Ganhar", "Número de vezes que jogou uma fase até ganhar a primeira vez");
+    const canvases = insertCharts(subsection, 1, false);
 
     const labels = [...new Set(jsons.reduce((acc, cur) => {
       acc = acc.concat(cur.logEntries);
@@ -365,9 +373,9 @@ function displayData() {
     plotBar(canvases[0], datasets, labels);
   }
 
-  function displayNotas() {
-    const section = insertSection("Notas", "Notas finais de cada partida");
-    const canvases = insertCharts(section, filteredJsons.length, false);
+  function displayNotas(section) {
+    const subsection = insertSubsection(section, "Notas", "Notas finais de cada partida");
+    const canvases = insertCharts(subsection, filteredJsons.length, false);
 
     let gradeToNumber = function (grade) {
       switch (grade) {
@@ -428,9 +436,9 @@ function displayData() {
     }
   }
 
-  function displayPortalGap() {
-    const section = insertSection("Portal Gap", "Abertura do portal ao final de cada partida");
-    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+  function displayPortalGap(section) {
+    const subsection = insertSubsection(section, "Portal Gap", "Abertura do portal ao final de cada partida");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const logFile = filteredJsons[i];
@@ -451,9 +459,9 @@ function displayData() {
     }
   }
 
-  function displayMediaNotas() {
-    const section = insertSection("Notas - Médias","Média das notas em cada fase, considerando partidas finalizadas");
-    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+  function displayMediaNotas(section) {
+    const subsection = insertSubsection(section, "Notas - Médias","Média das notas em cada fase, considerando partidas finalizadas");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     let gradeToNumber = function (grade) {
       switch (grade) {
@@ -534,9 +542,9 @@ function displayData() {
     }
   }
 
-  function displayMediaPortalGap() {
-    const section = insertSection("Portal Gap - Médio", "Abertura média do portal em cada fase, considerando apenas vitórias");
-    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+  function displayMediaPortalGap(section) {
+    const subsection = insertSubsection(section, "Portal Gap - Médio", "Abertura média do portal em cada fase, considerando apenas vitórias");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -570,9 +578,9 @@ function displayData() {
     }
   }
 
-  function displayEnergia() {
-    const section = insertSection("Energia","Energia coletada e depositada em cada partida");
-    const canvases = insertCharts(section, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+  function displayEnergia(section) {
+    const subsection = insertSubsection(section, "Energia","Energia coletada e depositada em cada partida");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
 
     for (let i = 0; i < filteredJsons.length; i++) {
@@ -749,43 +757,73 @@ function plotRadar(canvas, datasets, labels, title) {
   })
 }
 
-
-// insere uma nova seção
-function insertSection(sectionTitle, sectionDescription) {
+function insertSection(sectionTitle){
   // create section
   let parent = document.createElement("div");
-  parent.classList.add("chartSection", "scrollspy");
+  parent.classList.add("section", "scrollspy");
   parent.setAttribute("id", sectionTitle);
+  document.body.appendChild(parent);
+
+  // add section to menu
+  let navItem = document.createElement("li");
+  let navItem_a = document.createElement("a");
+  navItem_a.setAttribute("href", `#${sectionTitle}`);
+  navItem_a.setAttribute(`data-target`,`dropdown_${dropID}`);
+  navItem_a.innerHTML = sectionTitle;
+  navItem_a.classList.add(`dropdown-trigger`);
+  navItem.appendChild(navItem_a);
+  navMenu.appendChild(navItem);
+  let navitem_a_arrow = document.createElement(`i`);
+  navitem_a_arrow.classList.add(`material-icons`,`right`);
+  navitem_a_arrow.innerHTML = `arrow_drop_down`;
+  navItem_a.appendChild(navitem_a_arrow);
+
+  // make dropdown
+  let ul = document.createElement("ul");
+  ul.setAttribute(`id`,`dropdown_${dropID}`);
+  ul.classList.add(`dropdown-content`);
+  document.body.appendChild(ul);
+  dropID++;
+
+  return {section:parent,dropdown:ul};
+}
+
+// insere uma nova seção
+function insertSubsection(section,subsectionTitle, sectionDescription) {
+  // create section
+  let parent = document.createElement("div");
+  parent.classList.add("subsection", "scrollspy");
+  parent.setAttribute("id", subsectionTitle);
   let titleParent = document.createElement("div");
   titleParent.classList.add("row");
   let titleCenter = document.createElement("div");
   titleCenter.classList.add("col", "s12", "center-align");
   let title = document.createElement("h1");
-  title.classList.add("sectionTitle")
-  title.innerHTML = sectionTitle;
+  title.classList.add("subsectionTitle")
+  title.innerHTML = subsectionTitle;
   let description = document.createElement("p");
-  description.classList.add("sectionDescription")
+  description.classList.add("subsectionDescription");
   description.innerHTML = sectionDescription;
-  document.body.appendChild(parent);
+  section.section.appendChild(parent);
   parent.appendChild(titleParent);
   titleParent.appendChild(titleCenter);
   titleCenter.appendChild(title);
   titleCenter.appendChild(description);
 
-  // add section to menu
-  let navItem = document.createElement("li");
-  let navItem_a = document.createElement("a");
-  navItem_a.setAttribute("href", `#${sectionTitle}`)
-  navItem_a.innerHTML = sectionTitle;
-  navItem.appendChild(navItem_a);
-  navMenu.appendChild(navItem);
+  // add to dropdown
+  let li = document.createElement(`li`);
+  let a = document.createElement(`a`);
+  a.innerHTML = subsectionTitle;
+  a.setAttribute(`href`,`#${subsectionTitle}`);
+  li.appendChild(a);
+  section.dropdown.appendChild(li);
 
   // add section to side menu
   navItem = document.createElement("li");
   navItem_a = document.createElement("a");
-  navItem_a.setAttribute("href", `#${sectionTitle}`)
+  navItem_a.setAttribute("href", `#${subsectionTitle}`)
   navItem_a.classList.add("sidenav-close");
-  navItem_a.innerHTML = sectionTitle;
+  navItem_a.innerHTML = subsectionTitle;
   navItem.appendChild(navItem_a);
   sideNav.appendChild(navItem);
 
@@ -867,6 +905,11 @@ function updateScrollSpy() {
 function updateSideNav() {
   // M.Sidenav.init(elems, options);
   new M.Sidenav(sideNav);
+}
+
+function updateDropdowns(){
+  var elems = document.querySelectorAll('.dropdown-trigger');
+  M.Dropdown.init(elems, {coverTrigger:false, hover:true});
 }
 
 function getChartColor(i) {

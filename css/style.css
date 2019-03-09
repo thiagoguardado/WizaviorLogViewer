@@ -19,32 +19,26 @@ html {
 .canvasParent.radar,.canvasParent.polarArea {
   max-width:500px;
 }
-.chartSection{
+.subsection{
   border-top: 1px solid gray;
   padding: 5px 0;
 }
-.sectionTitle{
+.subsectionTitle{
   color:#464545;
   font-weight: bold;
   text-shadow: 3px 2px 9px rgba(150, 150, 150, 1);
   
 }
-.sectionDescription{
+.subsectionDescription{
   color:#464545;
   margin-bottom: 30px;
 }
 nav ul a{
   transition: font-size 0.1s ease;
-  font-size:10px;
-}
-nav ul a:hover{
-  font-size: 20px;
+  font-size:18px;
 }
 nav ul a.active{
   background-color: rgba(255, 255, 255, 0.2);
-  font-weight: bold;
-  font-style: italic;
-  font-size: 20px;
 }
 label{
   margin: 0 20px;
