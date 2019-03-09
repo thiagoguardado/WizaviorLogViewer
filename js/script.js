@@ -686,7 +686,7 @@ function displayData() {
 
       let colors = [];
       let powerups = playedLevels.map(info => {
-        let color = info.levelResult == "win" ? "grenn" : (info.levelResult == "lose" ? "red" : "yellow");
+        let color = info.levelResult == "win" ? "green" : (info.levelResult == "lose" ? "red" : "yellow");
         colors.push(color);
         return info.stats.powerUpsUsed;
       });
