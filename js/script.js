@@ -130,7 +130,7 @@ function displayData() {
 
   function displayQuedas(section) {
     const subsection = insertSubsection(section, "Quedas", "Quantidade total de quedas em cada partida");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const logFile = filteredJsons[i];
@@ -191,7 +191,7 @@ function displayData() {
 
   function displayPrimeiraQueda(section) {
     const subsection = insertSubsection(section, "Primeira Queda", "Tempo decorrido até a primeira queda em cada partida");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const logFile = filteredJsons[i];
@@ -220,7 +220,7 @@ function displayData() {
 
   function displayMediaPrimeiraQueda(section) {
     const subsection = insertSubsection(section, "Média Primeira Queda", "Média do tempo da primeira queda em cada fase");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -263,7 +263,7 @@ function displayData() {
 
   function displayMenorTempoDeQueda(section) {
     const subsection = insertSubsection(section, "Menor Tempo Queda", "Menor tempo decorrido até a primeira queda em cada fase");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -304,7 +304,7 @@ function displayData() {
 
   function displayVitoriasDerrotas(section) {
     const subsection = insertSubsection(section, "Vitórias", "Resultado de cada partida, considerando partidas finalizadas");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const logFile = filteredJsons[i];
@@ -338,7 +338,7 @@ function displayData() {
     const subsection = insertSubsection(section, "Tentativas Para Ganhar", "Número de vezes que jogou uma fase até ganhar a primeira vez");
     const canvases = insertCharts(subsection, 1, false);
 
-    const labels = [...new Set(jsons.reduce((acc, cur) => {
+    const labels = [...new Set(filteredJsons.reduce((acc, cur) => {
       acc = acc.concat(cur.logEntries);
       return acc;
     }, []).sort(sortLogFile).map(log => log.levelInfo.world + "_" + log.levelInfo.level))];
@@ -424,7 +424,7 @@ function displayData() {
 
   function displayPortalGap(section) {
     const subsection = insertSubsection(section, "Portal Gap", "Abertura do portal ao final de cada partida, considerando partidas finalizadas");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const logFile = filteredJsons[i];
@@ -447,7 +447,7 @@ function displayData() {
 
   function displayMediaNotas(section) {
     const subsection = insertSubsection(section, "Notas - Médias", "Média das notas em cada fase, considerando partidas finalizadas");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -510,7 +510,7 @@ function displayData() {
 
   function displayMediaPortalGap(section) {
     const subsection = insertSubsection(section, "Portal Gap - Médio", "Abertura média do portal em cada fase, considerando apenas vitórias");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -546,7 +546,7 @@ function displayData() {
 
   function displayEnergia(section) {
     const subsection = insertSubsection(section, "Energia", "Energia coletada e depositada em cada partida");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -583,7 +583,7 @@ function displayData() {
 
   function displayMainScoreMaisAlto(section) {
     const subsection = insertSubsection(section, "Main Score Mais Alto", "Maior Main Score e quantidade de tentativas na fase");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -630,7 +630,7 @@ function displayData() {
 
   function displayTempoJogo(section) {
     const subsection = insertSubsection(section, "Tempo de jogo", "Tempo de jogo (minutos) acumulado e quantidade de tentativas na fase");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -677,7 +677,7 @@ function displayData() {
 
   function displayPowerups(section) {
     const subsection = insertSubsection(section, "Uso de Power-ups", "Quantidade de power-ups utilizado (<span class='green'>verde</span> = vitória | <span class='red'>vermelho</span> = derrota | <span class='yellow'>amarelo</span> = desistência");
-    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -733,7 +733,13 @@ function plotLinear(canvas, datasets, labels, title = null, yAxesTickCallback = 
             maxRotation: 90
           }
         }],
-        yAxes: yAxesTickCallback ? [{ ticks: { callback: yAxesTickCallback } }] : ''
+        yAxes: [{
+          type: 'linear',
+          ticks: {
+            beginAtZero: true,
+            callback: yAxesTickCallback ? yAxesTickCallback : (label) => { return label }
+          }
+        }]
       },
       legend: {
         position: 'bottom',
