@@ -110,6 +110,7 @@ function displayData() {
   let analiseVitorias = insertSection(`Análise de Resultado`);
   displayVitoriasDerrotas(analiseVitorias);
   displayTentativas(analiseVitorias);
+  displayTempoJogo(analiseVitorias);
   let analisePerformance = insertSection(`Análise de Performance`);
   displayMainScoreMaisAlto(analisePerformance)
   displayNotas(analisePerformance);
@@ -622,6 +623,53 @@ function displayData() {
       plotBarDoubleAxis(canvas, datasets, stages, logFile.fileName, 4, numberToGrade, null, 1.5);
     }
   }
+
+  function displayTempoJogo(section){
+    const subsection = insertSubsection(section, "Tempo de jogo", "Tempo de jogo (minutos) acumulado e quantidade de tentativas na fase");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const canvas = canvases[i];
+      const logFile = filteredJsons[i];
+      const playedLevels = logFile.logEntries;
+      playedLevels.sort(sortLogFile);
+
+      let infos = playedLevels.reduce((acc, cur) => {
+        acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, seconds: cur.stats.secondsPlayed });
+        return acc;
+      }, []);
+      let stages = [...new Set(infos.map(info => info.key))];
+
+      let playTime = stages.map(stage=>{
+        return infos.filter(info => info.key == stage).reduce((acc,cur)=>{
+          acc += cur.seconds/60;
+          return acc;
+        },0)
+      })
+      let numberOfTries = stages.map(stage => {
+        return infos.filter(info => info.key == stage).length;
+      });
+
+      let datasets = [
+        {
+          label: 'Tempo de jogo (esquerda)',
+          yAxisID: 'left',
+          data: playTime,
+          fill: true,
+          backgroundColor: getChartColor(0)
+        },
+        {
+          label: 'Tentativas (direita)',
+          yAxisID: 'right',
+          data: numberOfTries,
+          fill: true,
+          backgroundColor: getChartColor(1)
+        }
+      ];
+
+      plotBarDoubleAxis(canvas, datasets, stages, logFile.fileName, null, null, null, 1.5);
+    }
+  }
 }
 
 
@@ -747,7 +795,6 @@ function plotBar(canvas, datasets, labels, title = null, yAxesTickCallback = nul
 function plotBarDoubleAxis(canvas, datasets, labels, title = null, leftMaxTick = null, leftYAxesTickCallback = null, rightYAxesTickCallback = null, aspectRatio = 2) {
   canvas.parentNode.classList.add('bar');
   const ctx = canvas.getContext('2d');
-  console.log(leftMaxTick);
   return new Chart(ctx, {
     type: 'bar',
     data: {
