@@ -76,7 +76,7 @@ function readJSONs(evt) {
 
 function clearSections() {
   // clear previous data
-  let sections = document.querySelectorAll(".chartSection");
+  let sections = document.querySelectorAll(".section");
   for (let i = 0; i < sections.length; i++) {
     sections[i].parentNode.removeChild(sections[i]);
   }
@@ -111,9 +111,10 @@ function displayData() {
   displayVitoriasDerrotas(analiseVitorias);
   displayTentativas(analiseVitorias);
   let analisePerformance = insertSection(`Análise de Performance`);
+  displayMainScoreMaisAlto(analisePerformance)
   displayNotas(analisePerformance);
-  displayPortalGap(analisePerformance);
   displayMediaNotas(analisePerformance);
+  displayPortalGap(analisePerformance);
   displayMediaPortalGap(analisePerformance);
   displayEnergia(analisePerformance);
 
@@ -377,26 +378,6 @@ function displayData() {
     const subsection = insertSubsection(section, "Notas", "Notas finais de cada partida");
     const canvases = insertCharts(subsection, filteredJsons.length, false);
 
-    let gradeToNumber = function (grade) {
-      switch (grade) {
-        case 'S': return 4;
-        case 'A': return 3;
-        case 'B': return 2;
-        case 'C': return 1;
-        default: return 0
-      }
-    }
-
-    let numberToGrade = function (label, index, labels) {
-      switch (label) {
-        case 4: return 'S';
-        case 3: return 'A';
-        case 2: return 'B';
-        case 1: return 'C';
-        default: return ''
-      }
-    }
-
     for (let i = 0; i < filteredJsons.length; i++) {
       const logFile = filteredJsons[i];
       const canvas = canvases[i];
@@ -460,28 +441,8 @@ function displayData() {
   }
 
   function displayMediaNotas(section) {
-    const subsection = insertSubsection(section, "Notas - Médias","Média das notas em cada fase, considerando partidas finalizadas");
+    const subsection = insertSubsection(section, "Notas - Médias", "Média das notas em cada fase, considerando partidas finalizadas");
     const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
-
-    let gradeToNumber = function (grade) {
-      switch (grade) {
-        case 'S': return 4;
-        case 'A': return 3;
-        case 'B': return 2;
-        case 'C': return 1;
-        default: return 0
-      }
-    }
-
-    let numberToGrade = function (label, index, labels) {
-      switch (label) {
-        case 4: return 'S';
-        case 3: return 'A';
-        case 2: return 'B';
-        case 1: return 'C';
-        default: return ''
-      }
-    }
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -538,7 +499,7 @@ function displayData() {
         }
       ]
 
-      plotBar(canvas, datasets, stages, logFile.fileName, numberToGrade);
+      plotBar(canvas, datasets, stages, logFile.fileName, numberToGrade, 1.5);
     }
   }
 
@@ -579,9 +540,8 @@ function displayData() {
   }
 
   function displayEnergia(section) {
-    const subsection = insertSubsection(section, "Energia","Energia coletada e depositada em cada partida");
+    const subsection = insertSubsection(section, "Energia", "Energia coletada e depositada em cada partida");
     const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
-
 
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
@@ -615,11 +575,58 @@ function displayData() {
       plotRadar(canvas, datasets, labels, logFile.fileName);
     }
   }
+
+  function displayMainScoreMaisAlto(section) {
+    const subsection = insertSubsection(section, "Main Score Mais Alto", "Maior Main Score e quantidade de tentativas na fase");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const canvas = canvases[i];
+      const logFile = filteredJsons[i];
+      const playedLevels = logFile.logEntries;
+      playedLevels.sort(sortLogFile);
+
+      let infos = playedLevels.reduce((acc, cur) => {
+        acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, performances: cur.performances });
+        return acc;
+      }, []);
+      let stages = [...new Set(infos.map(info => info.key))];
+
+      let highestGrades = stages.map(stage => {
+        let stageInfos = infos.filter(info => info.key == stage);
+        let stageMainScores = stageInfos.map(info => gradeToNumber(info.performances.mainScore));
+        let maxGrade = Math.max(...stageMainScores);
+        return maxGrade;
+      });
+      let numberOfTries = stages.map(stage => {
+        return infos.filter(info => info.key == stage).length;
+      });
+
+      let datasets = [
+        {
+          label: 'Main Score (esquerda)',
+          yAxisID: 'left',
+          data: highestGrades,
+          fill: true,
+          backgroundColor: getChartColor(0)
+        },
+        {
+          label: 'Tentativas (direita)',
+          yAxisID: 'right',
+          data: numberOfTries,
+          fill: true,
+          backgroundColor: getChartColor(1)
+        }
+      ];
+
+      plotBarDoubleAxis(canvas, datasets, stages, logFile.fileName, 4, numberToGrade, null, 1.5);
+    }
+  }
 }
 
 
 // plot linear chart
-function plotLinear(canvas, datasets, labels, title = null, yAxesTickCallback = null) {
+function plotLinear(canvas, datasets, labels, title = null, yAxesTickCallback = null, aspectRatio = 2) {
   canvas.parentNode.classList.add('linear');
   const ctx = canvas.getContext('2d');
   return new Chart(ctx, {
@@ -656,13 +663,14 @@ function plotLinear(canvas, datasets, labels, title = null, yAxesTickCallback = 
         display: title ? true : false,
         text: title
       },
+      aspectRatio: aspectRatio,
       animation: false
     }
   });
 }
 
 // plot radar chart
-function plotPolarArea(canvas, datasets, labels, title) {
+function plotPolarArea(canvas, datasets, labels, title, aspectRatio = 1) {
   canvas.parentNode.classList.add('polarArea');
   const ctx = canvas.getContext('2d');
   return new Chart(ctx, {
@@ -688,13 +696,13 @@ function plotPolarArea(canvas, datasets, labels, title) {
         display: true,
         text: title
       },
-      aspectRatio: 1,
+      aspectRatio: aspectRatio,
       animation: false
     }
   });
 }
 
-function plotBar(canvas, datasets, labels, title = null, yAxesTickCallback = null) {
+function plotBar(canvas, datasets, labels, title = null, yAxesTickCallback = null, aspectRatio = 2) {
   canvas.parentNode.classList.add('bar');
   const ctx = canvas.getContext('2d');
   return new Chart(ctx, {
@@ -730,12 +738,70 @@ function plotBar(canvas, datasets, labels, title = null, yAxesTickCallback = nul
         display: title ? true : false,
         text: title ? title : ''
       },
+      aspectRatio: aspectRatio,
       animation: false
     }
   });
 }
 
-function plotRadar(canvas, datasets, labels, title) {
+function plotBarDoubleAxis(canvas, datasets, labels, title = null, leftMaxTick = null, leftYAxesTickCallback = null, rightYAxesTickCallback = null, aspectRatio = 2) {
+  canvas.parentNode.classList.add('bar');
+  const ctx = canvas.getContext('2d');
+  console.log(leftMaxTick);
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      scales: {
+        xAxes: [{
+          ticks: {
+            autoSkip: false,
+            minRotation: 90,
+            maxRotation: 90
+          }
+        }],
+        yAxes: [{
+          id: 'left',
+          type: 'linear',
+          position: 'left',
+          ticks: leftMaxTick ? {
+            max: leftMaxTick,
+            beginAtZero: true,
+            callback: leftYAxesTickCallback ? leftYAxesTickCallback : (label) => { return label }
+          } : {
+              beginAtZero: true,
+              callback: leftYAxesTickCallback ? leftYAxesTickCallback : (label) => { return label }
+            }
+        }, {
+          id: 'right',
+          type: 'linear',
+          position: 'right',
+          ticks: {
+            beginAtZero: true,
+            callback: rightYAxesTickCallback ? rightYAxesTickCallback : (label) => { return label }
+          }
+        }]
+      },
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true
+        }
+      },
+      title: {
+        display: title ? true : false,
+        text: title ? title : ''
+      },
+      aspectRatio: aspectRatio,
+      animation: false
+    }
+  });
+}
+
+function plotRadar(canvas, datasets, labels, title, aspectRatio = 1) {
   canvas.parentNode.classList.add('radar');
   const ctx = canvas.getContext('2d');
   return new Chart(ctx, {
@@ -751,13 +817,13 @@ function plotRadar(canvas, datasets, labels, title) {
           usePointStyle: true
         }
       },
-      aspectRatio: 1,
+      aspectRatio: aspectRatio,
       animation: false
     }
   })
 }
 
-function insertSection(sectionTitle){
+function insertSection(sectionTitle) {
   // create section
   let parent = document.createElement("div");
   parent.classList.add("section", "scrollspy");
@@ -768,28 +834,28 @@ function insertSection(sectionTitle){
   let navItem = document.createElement("li");
   let navItem_a = document.createElement("a");
   navItem_a.setAttribute("href", `#${sectionTitle}`);
-  navItem_a.setAttribute(`data-target`,`dropdown_${dropID}`);
+  navItem_a.setAttribute(`data-target`, `dropdown_${dropID}`);
   navItem_a.innerHTML = sectionTitle;
   navItem_a.classList.add(`dropdown-trigger`);
   navItem.appendChild(navItem_a);
   navMenu.appendChild(navItem);
   let navitem_a_arrow = document.createElement(`i`);
-  navitem_a_arrow.classList.add(`material-icons`,`right`);
+  navitem_a_arrow.classList.add(`material-icons`, `right`);
   navitem_a_arrow.innerHTML = `arrow_drop_down`;
   navItem_a.appendChild(navitem_a_arrow);
 
   // make dropdown
   let ul = document.createElement("ul");
-  ul.setAttribute(`id`,`dropdown_${dropID}`);
+  ul.setAttribute(`id`, `dropdown_${dropID}`);
   ul.classList.add(`dropdown-content`);
   document.body.appendChild(ul);
   dropID++;
 
-  return {section:parent,dropdown:ul};
+  return { section: parent, dropdown: ul };
 }
 
 // insere uma nova seção
-function insertSubsection(section,subsectionTitle, sectionDescription) {
+function insertSubsection(section, subsectionTitle, sectionDescription) {
   // create section
   let parent = document.createElement("div");
   parent.classList.add("subsection", "scrollspy");
@@ -814,7 +880,7 @@ function insertSubsection(section,subsectionTitle, sectionDescription) {
   let li = document.createElement(`li`);
   let a = document.createElement(`a`);
   a.innerHTML = subsectionTitle;
-  a.setAttribute(`href`,`#${subsectionTitle}`);
+  a.setAttribute(`href`, `#${subsectionTitle}`);
   li.appendChild(a);
   section.dropdown.appendChild(li);
 
@@ -907,9 +973,9 @@ function updateSideNav() {
   new M.Sidenav(sideNav);
 }
 
-function updateDropdowns(){
+function updateDropdowns() {
   var elems = document.querySelectorAll('.dropdown-trigger');
-  M.Dropdown.init(elems, {coverTrigger:false, hover:true});
+  M.Dropdown.init(elems, { coverTrigger: false, hover: true });
 }
 
 function getChartColor(i) {
@@ -932,6 +998,26 @@ function filterJsons() {
   }, []);
   clearSections();
   displayData();
+}
+
+function gradeToNumber(grade) {
+  switch (grade) {
+    case 'S': return 4;
+    case 'A': return 3;
+    case 'B': return 2;
+    case 'C': return 1;
+    default: return 0
+  }
+}
+
+function numberToGrade(label, index, labels) {
+  switch (label) {
+    case 4: return 'S';
+    case 3: return 'A';
+    case 2: return 'B';
+    case 1: return 'C';
+    default: return ''
+  }
 }
 
 function readJSONLocal() {
