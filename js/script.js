@@ -21,16 +21,19 @@ var chartsColors = [
   "#91039e",
 ];
 
+function init() {
 
-// bind function to filter checkboxes
-Array.from(checkboxes).map(checkbox => {
-  checkboxStatus[checkbox.value] = true;
-  checkbox.addEventListener("change", e => {
-    checkboxStatus[e.target.value] = !checkboxStatus[e.target.value];
-    filterJsons();
-  })
-});
+  // bind function to filter checkboxes
+  Array.from(checkboxes).map(checkbox => {
+    checkboxStatus[checkbox.value] = true;
+    checkbox.addEventListener("change", e => {
+      checkboxStatus[e.target.value] = !checkboxStatus[e.target.value];
+      filterJsons();
+    })
+  });
 
+  // readJSONLocal();
+}
 
 function uploadLogs(e) {
   // stop button pulsing
@@ -76,7 +79,7 @@ function readJSONs(evt) {
 
 function clearSections() {
   // clear previous data
-  let sections = document.querySelectorAll(".section");
+  let sections = document.querySelectorAll(".chartsSection");
   for (let i = 0; i < sections.length; i++) {
     sections[i].parentNode.removeChild(sections[i]);
   }
@@ -101,28 +104,29 @@ function clearJsons() {
 
 function displayData() {
 
-  let analiseQuedas = insertSection(`Análise de Quedas`);
+  let analiseQuedas = insertSection(`Quedas`);
   displayQuedas(analiseQuedas);
   displayQuedasVulcao(analiseQuedas);
   displayPrimeiraQueda(analiseQuedas);
   displayMediaPrimeiraQueda(analiseQuedas);
   displayMenorTempoDeQueda(analiseQuedas);
-  let analiseVitorias = insertSection(`Análise de Resultado`);
+  let analiseVitorias = insertSection(`Resultados`);
   displayVitoriasDerrotas(analiseVitorias);
   displayTentativas(analiseVitorias);
-  displayTempoJogo(analiseVitorias);
-  let analisePerformance = insertSection(`Análise de Performance`);
+  let analiseComportamento = insertSection(`Comportamento`);
+  displayTempoJogo(analiseComportamento);
+  displayEnergia(analiseComportamento);
+  displayPowerups(analiseComportamento);
+  let analisePerformance = insertSection(`Performance`);
   displayMainScoreMaisAlto(analisePerformance)
   displayNotas(analisePerformance);
   displayMediaNotas(analisePerformance);
   displayPortalGap(analisePerformance);
   displayMediaPortalGap(analisePerformance);
-  displayEnergia(analisePerformance);
 
   updateScrollSpy();
   updateSideNav();
   updateDropdowns();
-
 
   function displayQuedas(section) {
     const subsection = insertSubsection(section, "Quedas", "Quantidade total de quedas em cada partida");
@@ -299,7 +303,7 @@ function displayData() {
   }
 
   function displayVitoriasDerrotas(section) {
-    const subsection = insertSubsection(section, "Vitórias", "Resultado de cada partida finalizada");
+    const subsection = insertSubsection(section, "Vitórias", "Resultado de cada partida, considerando partidas finalizadas");
     const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
@@ -326,7 +330,7 @@ function displayData() {
         else if (label == 0) return "Derrota";
       }
 
-      let chart = plotLinear(canvas, datasets, labels, null, yAxesCallback);
+      let chart = plotLinear(canvas, datasets, labels, null, yAxesCallback,3);
     }
   }
 
@@ -376,7 +380,7 @@ function displayData() {
   }
 
   function displayNotas(section) {
-    const subsection = insertSubsection(section, "Notas", "Notas finais de cada partida");
+    const subsection = insertSubsection(section, "Notas", "Notas finais de cada partida, considerando partidas finalizadas");
     const canvases = insertCharts(subsection, filteredJsons.length, false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
@@ -419,7 +423,7 @@ function displayData() {
   }
 
   function displayPortalGap(section) {
-    const subsection = insertSubsection(section, "Portal Gap", "Abertura do portal ao final de cada partida");
+    const subsection = insertSubsection(section, "Portal Gap", "Abertura do portal ao final de cada partida, considerando partidas finalizadas");
     const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
     for (let i = 0; i < filteredJsons.length; i++) {
@@ -624,7 +628,7 @@ function displayData() {
     }
   }
 
-  function displayTempoJogo(section){
+  function displayTempoJogo(section) {
     const subsection = insertSubsection(section, "Tempo de jogo", "Tempo de jogo (minutos) acumulado e quantidade de tentativas na fase");
     const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
 
@@ -640,11 +644,11 @@ function displayData() {
       }, []);
       let stages = [...new Set(infos.map(info => info.key))];
 
-      let playTime = stages.map(stage=>{
-        return infos.filter(info => info.key == stage).reduce((acc,cur)=>{
-          acc += cur.seconds/60;
+      let playTime = stages.map(stage => {
+        return infos.filter(info => info.key == stage).reduce((acc, cur) => {
+          acc += cur.seconds / 60;
           return acc;
-        },0)
+        }, 0)
       })
       let numberOfTries = stages.map(stage => {
         return infos.filter(info => info.key == stage).length;
@@ -668,6 +672,36 @@ function displayData() {
       ];
 
       plotBarDoubleAxis(canvas, datasets, stages, logFile.fileName, null, null, null, 1.5);
+    }
+  }
+
+  function displayPowerups(section) {
+    const subsection = insertSubsection(section, "Uso de Power-ups", "Quantidade de power-ups utilizado (<span class='green'>verde</span> = vitória | <span class='red'>vermelho</span> = derrota | <span class='yellow'>amarelo</span> = desistência");
+    const canvases = insertCharts(subsection, filteredJsons.length, jsons.length > 1 ? gridCharts : false);
+
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const canvas = canvases[i];
+      const logFile = filteredJsons[i];
+      const playedLevels = logFile.logEntries.filter(file => (file.levelInfo.world == "Volcano" && file.levelInfo.level == 4));
+
+      let colors = [];
+      let powerups = playedLevels.map(info => {
+        let color = info.levelResult == "win" ? "grenn" : (info.levelResult == "lose" ? "red" : "yellow");
+        colors.push(color);
+        return info.stats.powerUpsUsed;
+      });
+
+      let datasets = [
+        {
+          label: '',
+          data: powerups,
+          backgroundColor: colors
+        }
+      ]
+
+      const labels = playedLevels.map(log => log.levelInfo.world + "_" + log.levelInfo.level);
+
+      plotBar(canvas, datasets, labels, logFile.fileName);
     }
   }
 }
@@ -873,7 +907,7 @@ function plotRadar(canvas, datasets, labels, title, aspectRatio = 1) {
 function insertSection(sectionTitle) {
   // create section
   let parent = document.createElement("div");
-  parent.classList.add("section", "scrollspy");
+  parent.classList.add("chartsSection", "scrollspy");
   parent.setAttribute("id", sectionTitle);
   document.body.appendChild(parent);
 
@@ -1097,5 +1131,3 @@ function readJSONLocal() {
     xhr.send();
   }
 }
-
-readJSONLocal();

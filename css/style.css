@@ -19,6 +19,9 @@ html {
 .canvasParent.radar,.canvasParent.polarArea {
   max-width:500px;
 }
+.chartsSection{
+  border-top: 2px solid black;
+}
 .subsection{
   border-top: 1px solid gray;
   padding: 5px 0;
@@ -27,7 +30,6 @@ html {
   color:#464545;
   font-weight: bold;
   text-shadow: 3px 2px 9px rgba(150, 150, 150, 1);
-  
 }
 .subsectionDescription{
   color:#464545;
