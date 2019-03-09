@@ -204,7 +204,7 @@ function displayData() {
             if (log.fallsTimes.length > 0) {
               return log.fallsTimes[0]
             } else {
-              return 0;
+              return null;
             }
           }),
           fill: false,
