@@ -535,7 +535,7 @@ function displayData() {
       })
       let datasets = [
         {
-          label: "Portal Gap",
+          label: logFile.fileName,
           data: data,
           fill: false,
           borderColor: getChartColor(i),
@@ -903,6 +903,10 @@ function plotRadar(canvas, datasets, labels, title, aspectRatio = 1) {
         labels: {
           usePointStyle: true
         }
+      },
+      title: {
+        display: title ? true : false,
+        text: title ? title : ''
       },
       aspectRatio: aspectRatio,
       animation: false
