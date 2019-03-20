@@ -110,9 +110,10 @@ function displayData() {
   displayPrimeiraQueda(analiseQuedas);
   displayMediaPrimeiraQueda(analiseQuedas);
   displayMenorTempoDeQueda(analiseQuedas);
-  let analiseVitorias = insertSection(`Resultados`);
-  displayVitoriasDerrotas(analiseVitorias);
-  displayTentativas(analiseVitorias);
+  let analiseResultados = insertSection(`Resultados`);
+  displayResultados(analiseResultados);
+  displayVitoriasDerrotas(analiseResultados);
+  displayTentativas(analiseResultados);
   let analiseComportamento = insertSection(`Comportamento`);
   displayTempoJogo(analiseComportamento);
   displayEnergia(analiseComportamento);
@@ -302,6 +303,58 @@ function displayData() {
     }
   }
 
+  function displayResultados(section) {
+    const subsection = insertSubsection(section, "Resultados", "Resultados combinados das partidas em cada fase");
+    const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
+
+    for (let i = 0; i < filteredJsons.length; i++) {
+      const logFile = filteredJsons[i];
+      const canvas = canvases[i];
+      logFile.logEntries.sort(sortLogFile);
+
+      let infos = logFile.logEntries.reduce((acc, cur) => {
+        let newitem = { world: cur.levelInfo.world, level: cur.levelInfo.level };
+        if (!acc.includes(newitem)) {
+          acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, levelResult: cur.levelResult });
+        }
+        return acc;
+      }, []);
+
+      let dataWin = [];
+      let dataLose = [];
+      let dataAbort = [];
+      let stages = [...new Set(infos.map(info => info.key))];
+      stages.map(stage => {
+        dataWin.push(infos.filter(info => { return info.key == stage && info.levelResult == "win" }).length);
+        dataLose.push(infos.filter(info => { return info.key == stage && info.levelResult == "lose" }).length);
+        dataAbort.push(infos.filter(info => { return info.key == stage && (info.levelResult != "win" && info.levelResult != "lose") }).length);
+      });
+      console.log({dataWin});
+      let datasets = [
+        {
+          label: "Vitórias",
+          data: dataWin,
+          fill: true,
+          backgroundColor: "green",
+        },
+        {
+          label: "Derrotas",
+          data: dataLose,
+          fill: true,
+          backgroundColor: "red",
+        },
+        {
+          label: "Abortagens",
+          data: dataAbort,
+          fill: true,
+          backgroundColor: "yellow",
+        }
+      ];
+
+      let chart = plotBar(canvas, datasets, stages, logFile.fileName, null, 1.5);
+    }
+  }
+
   function displayVitoriasDerrotas(section) {
     const subsection = insertSubsection(section, "Vitórias", "Resultado de cada partida, considerando partidas finalizadas");
     const canvases = insertCharts(subsection, filteredJsons.length, filteredJsons.length > 1 ? gridCharts : false);
@@ -330,7 +383,7 @@ function displayData() {
         else if (label == 0) return "Derrota";
       }
 
-      let chart = plotLinear(canvas, datasets, labels, null, yAxesCallback,3);
+      let chart = plotLinear(canvas, datasets, labels, null, yAxesCallback, 3);
     }
   }
 
@@ -1141,3 +1194,6 @@ function readJSONLocal() {
     xhr.send();
   }
 }
+
+// debug locally
+// readJSONLocal();
