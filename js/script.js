@@ -226,9 +226,9 @@ function displayData() {
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
       const logFile = filteredJsons[i];
-      logFile.logEntries.sort(sortLogFile);
+      const sortedLogEntries = [...logFile.logEntries].sort(sortLogFile);
 
-      let infos = logFile.logEntries.reduce((acc, cur) => {
+      let infos = sortedLogEntries.reduce((acc, cur) => {
         let newitem = { world: cur.levelInfo.world, level: cur.levelInfo.level };
         if (!acc.includes(newitem)) {
           if (cur.fallsTimes.length != 0)
@@ -269,9 +269,9 @@ function displayData() {
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
       const logFile = filteredJsons[i];
-      logFile.logEntries.sort(sortLogFile);
+      const sortedLogEntries = [...logFile.logEntries].sort(sortLogFile);
 
-      let infos = logFile.logEntries.reduce((acc, cur) => {
+      let infos = sortedLogEntries.reduce((acc, cur) => {
         let newitem = { world: cur.levelInfo.world, level: cur.levelInfo.level };
         if (!acc.includes(newitem)) {
           if (cur.fallsTimes.length != 0)
@@ -310,9 +310,9 @@ function displayData() {
     for (let i = 0; i < filteredJsons.length; i++) {
       const logFile = filteredJsons[i];
       const canvas = canvases[i];
-      logFile.logEntries.sort(sortLogFile);
+      const sortedLogEntries = [...logFile.logEntries].sort(sortLogFile);
 
-      let infos = logFile.logEntries.reduce((acc, cur) => {
+      let infos = sortedLogEntries.reduce((acc, cur) => {
         let newitem = { world: cur.levelInfo.world, level: cur.levelInfo.level };
         if (!acc.includes(newitem)) {
           acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, levelResult: cur.levelResult });
@@ -641,8 +641,7 @@ function displayData() {
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
       const logFile = filteredJsons[i];
-      const playedLevels = logFile.logEntries;
-      playedLevels.sort(sortLogFile);
+      const playedLevels = [...logFile.logEntries].sort(sortLogFile);
 
       let infos = playedLevels.reduce((acc, cur) => {
         acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, performances: cur.performances });
@@ -688,8 +687,7 @@ function displayData() {
     for (let i = 0; i < filteredJsons.length; i++) {
       const canvas = canvases[i];
       const logFile = filteredJsons[i];
-      const playedLevels = logFile.logEntries;
-      playedLevels.sort(sortLogFile);
+      const playedLevels = [...logFile.logEntries].sort(sortLogFile);
 
       let infos = playedLevels.reduce((acc, cur) => {
         acc.push({ key: cur.levelInfo.world + "_" + cur.levelInfo.level, world: cur.levelInfo.world, level: cur.levelInfo.level, seconds: cur.stats.secondsPlayed });
